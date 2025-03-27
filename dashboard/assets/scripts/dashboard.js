@@ -558,8 +558,11 @@ class JobsRenderer {
 				// the exception may be entirely missing.
 				info.statsElements.jobInfo.classList.remove("job-info-fatal");
 				info.statsElements.jobInfo.classList.add("job-info-aborted");
+			} else if (/^Queued item /.test(line)) {
+				info.statsElements.jobInfo.classList.add("job-info-queued");
 			} else if (/^Received item /.test(line)) {
 				// Clear other statuses if a job restarts with the same job ID
+				info.statsElements.jobInfo.classList.remove("job-info-queued");
 				info.statsElements.jobInfo.classList.remove("job-info-done");
 				info.statsElements.jobInfo.classList.remove("job-info-failed");
 				info.statsElements.jobInfo.classList.remove("job-info-fatal");
@@ -1098,6 +1101,7 @@ class Dashboard {
 		const filterJobPipe = args.filterJobPipe ? Boolean(Number(args.filterJobPipe)) : true;
 		const filterJobNick = args.filterJobNick ? Boolean(Number(args.filterJobNick)) : true;
 		const showAllHeaders = args.showAllHeaders ? Boolean(Number(args.showAllHeaders)) : true;
+		const showQueuedJobs = args.showQueuedJobs ? Boolean(Number(args.showQueuedJobs)) : true;
 		const showRunningJobs = args.showRunningJobs ? Boolean(Number(args.showRunningJobs)) : true;
 		const showFinishedJobs = args.showFinishedJobs ? Boolean(Number(args.showFinishedJobs)) : true;
 		const showFailedJobs = args.showFailedJobs ? Boolean(Number(args.showFailedJobs)) : true;
@@ -1196,6 +1200,7 @@ class Dashboard {
 
 		this.showAllHeaders(showAllHeaders);
 
+		this.showQueuedJobs(showQueuedJobs);
 		this.showRunningJobs(showRunningJobs);
 		this.showFinishedJobs(showFinishedJobs);
 		this.showFailedJobs(showFailedJobs);
@@ -1353,6 +1358,8 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 			window.open(this.jobsRenderer.firstFilterMatch.url);
 		} else if (ev.which === 104 /* h */) {
 			ds.showAllHeaders(!byId("show-all-headers").checked);
+		} else if (ev.which === 113 /* q */) {
+			ds.showQueuedJobs(!byId("show-queued-jobs").checked);
 		} else if (ev.which === 114 /* r */) {
 			ds.showRunningJobs(!byId("show-running-jobs").checked);
 		} else if (ev.which === 100 /* d */) {
@@ -1427,6 +1434,11 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 	showAllHeaders(value) {
 		byId('show-all-headers').checked = value;
 		byId('hide-headers').sheet.disabled = value;
+	}
+
+	showQueuedJobs(value) {
+		byId('show-queued-jobs').checked = value;
+		byId('hide-queued').sheet.disabled = value;
 	}
 
 	showRunningJobs(value) {

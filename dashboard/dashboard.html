@@ -121,6 +121,10 @@ html, body, .job-ident {
 	overflow: hidden;
 }
 
+.job-info-queued {
+	color: #CCAA55 !important;
+}
+
 .job-info-done {
 	color: #767676;
 }
@@ -406,8 +410,15 @@ kbd {
 	content-visibility: hidden;
 }
 </style>
+<style id="hide-queued">
+.log-container:has(.job-info-queued) {
+	display: none;
+	content-visibility: hidden;
+}
+</style>
 <style id="hide-running">
 .log-container:not(
+	:has(.job-info-queued),
 	:has(.job-info-done),
 	:has(.job-info-failed),
 	:has(.job-info-fatal),
@@ -469,6 +480,8 @@ kbd {
 			<label for="show-all-headers">All headers</label>
 			<details class="drop-down">
 			<summary>Jobs</summary>
+			<input type="checkbox" id="show-queued-jobs" onclick="ds.showQueuedJobs(this.checked);" accesskey="q">
+			<label class="job-info-queued" for="show-queued-jobs">Queued</label><br>
 			<input type="checkbox" id="show-running-jobs" onclick="ds.showRunningJobs(this.checked);" accesskey="r">
 			<label for="show-running-jobs">Running</label><br>
 			<input type="checkbox" id="show-finished-jobs" onclick="ds.showFinishedJobs(this.checked);" accesskey="d">
@@ -503,6 +516,7 @@ kbd {
 				To show or hide a job, click anywhere on its header.
 
 				The color coding for the job header is:
+					<span class="job-info-queued">queued</span>,
 					in progress,
 					<span class="job-info-done">finished normally</span>,
 					<span class="job-info-failed">finished with failure</span>,
@@ -530,6 +544,7 @@ kbd {
 				<li><kbd>i</kbd> - use the initial job log filter
 				<li><kbd>v</kbd> - open the job URL of the first-shown job log
 				<li><kbd>h</kbd> - show/hide headers for hidden job logs
+				<li><kbd>q</kbd> - show/hide header+log for queued jobs
 				<li><kbd>r</kbd> - show/hide header+log for running jobs
 				<li><kbd>d</kbd> - show/hide header+log for finished jobs
 				<li><kbd>b</kbd> - show/hide header+log for failed jobs
@@ -562,6 +577,7 @@ kbd {
 				</li>
 				<li>To initially hide headers for hidden job logs, add <kbd><span class="url-q-or-amp">?</span>showAllHeaders=0</kbd> to the dashboard URL. The default is to show them.</li>
 				<li>To initially hide different job types, add these to the dashboard URL. The default is to show them.
+					<kbd><span class="url-q-or-amp">?</span>showQueuedJobs=0</kbd>
 					<kbd><span class="url-q-or-amp">?</span>showRunningJobs=0</kbd>
 					<kbd><span class="url-q-or-amp">?</span>showFinishedJobs=0</kbd>
 					<kbd><span class="url-q-or-amp">?</span>showFailedJobs=0</kbd>
