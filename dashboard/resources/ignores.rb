@@ -11,8 +11,15 @@ class Ignores < Webmachine::Resource
 
   def to_text
     buffer = []
+    compact = request.query['compact'] == 'true'
+    cmds = request.query['cmds'] == 'true'
+    ig = compact ? 'ig' : 'ignore';
+    ug = compact ? 'ug' : 'unignore';
+    igset = compact ? 'igset' : 'ignoreset';
 
-    return 400 if request.query['compact'] == 'true' && keys.length > 1
+    return usage() if !request.path_tokens.last
+
+    return usage() if compact && keys.length > 1
 
     keys.each do |key|
       self.class.redis.sscan_each("#{key}_ignores", count: 100) do |ignore|
@@ -20,7 +27,7 @@ class Ignores < Webmachine::Resource
       end
     end
 
-    if request.query['compact'] == 'true'
+    if compact || cmds:
       # Read all ignore patterns
       #TODO: Use CouchDB instead, somehow?
       ignore_patterns_path = File.expand_path('../../../db/ignore_patterns', __FILE__)
@@ -59,9 +66,29 @@ class Ignores < Webmachine::Resource
           end
         end
       end
+    end
 
+    if cmds
+      output = []
+      
+      igset_names.each do |igset_name|
+        if job_sets[igset_name]
+          output << "!#{ig} #{keys[0]} #{pattern}"
+          if not igsets[igset_name].empty?
+            # Some ignores are excluded
+            output << "  #{igset_name}, excluding:"
+            igsets[igset_name].sort.each { |pattern| output << "    #{pattern}" }
+          else
+            output << "  #{igset_name}"
+          end
+        end
+      end
+      manual_job_patterns.sort.each { |pattern| output << "!#{ig} #{keys[0]} #{pattern}" }
+      output.join("\n")
+    elsif compact
       # Format output
       output = []
+      
       output << "Ignore sets for job #{keys[0]}:"
       igset_names.each do |igset_name|
         if job_sets[igset_name]
@@ -91,4 +118,24 @@ class Ignores < Webmachine::Resource
   def keys
     request.path_tokens.last.split(',')
   end
+
+  def usage
+    response.body = %{
+      Examples:
+
+        List the ignores for all three jobids:
+        http://archivebot.com/ignores/jobid,jobid,jobid
+
+        List the ignore sets and manual ignores for a job:
+        http://archivebot.com/ignores/jobid?compact=true        
+
+        List the commands for ignore sets and manual ignores for a job:
+        http://archivebot.com/ignores/jobid?cmds=true
+
+        List the compact commands for ignore sets and manual ignores for a job:
+        http://archivebot.com/ignores/jobid?cmds=true&compact=true
+    }
+    400
+  end
+
 end
