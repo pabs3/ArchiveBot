@@ -398,7 +398,7 @@ class JobsRenderer {
 			delay: h("span", { className: `inline-stat ${maybeAligned("job-delay")}` }, "? ms delay"),
 			ignores: h("a", {
 				className: "job-ignores",
-				href: `//${ds.host}${ds.port}/ignores/${ident}?compact=true`,
+				href: `//archivebot.com/ignores/${ident}?compact=true`,
 				onclick: (ev) => { ev.stopPropagation(); },
 			}, "?" ),
 			pipeline: h("a", {
