@@ -6,6 +6,7 @@ class Pending < Webmachine::Resource
   def content_types_provided
     [
       ['text/plain', :to_text]
+      ['application/json', :to_json]
     ]
   end
 
@@ -39,5 +40,9 @@ class Pending < Webmachine::Resource
     end
 
     buffer.join("\n\n")
+  end
+
+  def to_json
+    
   end
 end
