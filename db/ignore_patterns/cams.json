@@ -1,0 +1,8 @@
+{
+	"name": "badvideos",
+	"patterns": [
+		"^https?://(cuts\\.diamond|mlb-cuts-diamond)\\.mlb\\.com/FORGE/.*\\.mp4$",
+		"^https?://video\\.seattle\\.gov/"
+	],
+	"type": "ignore_patterns"
+}
