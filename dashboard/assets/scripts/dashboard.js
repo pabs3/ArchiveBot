@@ -292,6 +292,7 @@ class JobsRenderer {
 			ms = !this.filterBox.value ? 0 : ms;
 			clearTimeout(this.filterTimeout);
 			this.filterTimeout = setTimeout(() => {
+				clearTimeout(this.filterTimeout);
 				if (this.filterBox.value !== this.filterBox.old) {
 					this.applyFilter();
 					this.filterBox.old = this.filterBox.value;
