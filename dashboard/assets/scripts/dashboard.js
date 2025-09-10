@@ -404,7 +404,7 @@ class JobsRenderer {
 			}, "?" ),
 			pipeline: h("a", {
 				className: `inline-stat ${maybeAligned("job-pipeline")}`,
-				href: `//${ds.host}${ds.port}/pipelines?initialFilter=${jobData.pipeline_id}`,
+				href: `//archivebot.com/pipelines?initialFilter=${jobData.pipeline_id}`,
 				title: pipeline_title,
 				onclick: (ev) => { ev.stopPropagation(); },
 			}, pipeline_text),
