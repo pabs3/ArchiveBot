@@ -163,9 +163,30 @@ function removeFromArray(arr, item) {
 /*** End of utility code ***/
 
 class JobsTracker {
+	static tracked = {
+		"url": "https://digital.katalog.queersearch.org/",
+		"fetch_depth": "inf",
+		"user_agent": "",
+		"slug": "digital.katalog.queersearch.org-inf",
+		"started_by": "c3manu",
+		"started_in": "#archivebot",
+		"delay_min": "250",
+		"delay_max": "375",
+//		"settings_age": "6",
+		"concurrency": "3",
+		"note": "proactive",
+		"suppress_ignore_reports": "true",
+		"queued_at": "1759430682",
+		"started_at": "1759430685.166338",
+		"pipeline_id": "pipeline:fdf7050af2a290e3cdd42947358ee578",
+//		"error_count": "58",
+//		"death_timer": "0",
+	};
+
 	constructor() {
 		this.known = {};
 		this.sorted = [];
+		this.history = {};
 		this.finishedArray = [];
 		this.finishedSet = {};
 		this.fatalExceptionSet = {};
@@ -185,12 +206,28 @@ class JobsTracker {
 	handleJobData(jobData) {
 		const ident = jobData.ident;
 		const alreadyKnown = ident in this.known;
+		let jobDataChanged = [];
 		if (!alreadyKnown) {
 			this.known[ident] = true;
 			this.sorted.push(jobData);
 			this.resort();
+			this.history[ident] = [jobData];
+		} else {
+			for (const key of Object.keys(JobsTracker.tracked)) {
+				if (jobData[key] !== this.history[ident][0][key]) {
+					jobDataChanged.push(key);
+				}
+			}
+			if (jobDataChanged.length !== 0){
+				let log = `${ident} `;
+				for (const key of jobDataChanged) {
+					log += `${key} ${this.history[ident][0][key]} => ${jobData[key]}, `;
+				}
+				console.log(log);
+				this.history[ident].unshift(jobData);
+			}
 		}
-		return !alreadyKnown;
+		return [!alreadyKnown, jobDataChanged];
 	}
 
 	markFinished(ident) {
@@ -379,6 +416,38 @@ class JobsRenderer {
 			},
 		};
 
+		const logWindow = h("div", logWindowAttrs, logSegment);
+
+		const [jobHeader, statsElements, jobUrl, jobNote] = this._createJobHeader(jobData);
+
+		const div = h("div", { className: "log-container", id: `log-container-${ident}` }, [
+			h("details", { open: true }, [
+				h("summary", {
+					className: "job-history-summary",
+					ariaDisabled: "true",
+					onclick: (ev) => {
+						if (this.ariaDisabled === "true" || ev.target !== ev.currentTarget) {
+							// Ignore click events when no history or for child elements
+							return false;
+						}
+					},
+				}, [
+					jobHeader,
+				]),
+			]),
+			logWindow,
+		]);
+
+		this.renderInfo[ident] = new JobRenderInfo(logWindow, logSegment, statsElements, jobUrl, jobNote, 0, [0]);
+		this.container.insertBefore(div, beforeElement);
+		// Filter hasn't changed, but we might need to filter out the new job, or
+		// add/remove log-window-expanded class
+		this.applyFilter();
+	}
+
+	_createJobHeader (jobData) {
+		const ident = jobData.ident;
+
 		const maybeAligned = (className) => {
 			let s = className;
 			if (this._aligned) {
@@ -386,7 +455,6 @@ class JobsRenderer {
 			}
 			return s;
 		};
-
 
 		const [pipeline_title, pipeline_text] = this.pipelineInfo(jobData);
 
@@ -415,14 +483,18 @@ class JobsRenderer {
 		const jobNote = h("span", { className: maybeAligned("job-note") }, null);
 
 		statsElements.jobInfo = h("span", { className: "job-info" }, [
-			h("a", { className: `inline-stat ${maybeAligned("job-url")}`, href: jobData.url }, jobData.url),
+			h("a", {
+				className: `inline-stat ${maybeAligned("job-url")}`,
+				href: jobData.url,
+				onclick: (ev) => { ev.stopPropagation(); },
+			}, jobData.url),
 			// Clicking anywhere in this area will set the filter to a regexp that
 			// matches only this job URL, thus hiding everything but this job.
 			h(
 				"span",
 				{
 					className: "stats-elements",
-					onclick: () => {
+					onclick: (ev) => {
 						const filter = ds.getFilter();
 						if (RegExp(filter).test(jobData.url) && filter.startsWith("^") && filter.endsWith("$")) {
 							// If we're already showing just this log window, go back
@@ -431,6 +503,7 @@ class JobsRenderer {
 						} else {
 							ds.setFilter(`^${regExpEscape(jobData.url)}$`);
 						}
+						ev.stopPropagation();
 					},
 				},
 				[
@@ -463,16 +536,34 @@ class JobsRenderer {
 		]);
 		const jobUrl = statsElements.jobInfo.querySelector(".job-url");
 
-		const logWindow = h("div", logWindowAttrs, logSegment);
-		const div = h("div", { className: "log-container", id: `log-container-${ident}` }, [
-			h("div", { className: "job-header" }, [statsElements.jobInfo, h("span", { className: "job-ident" }, ident)]),
-			logWindow,
-		]);
-		this.renderInfo[ident] = new JobRenderInfo(logWindow, logSegment, statsElements, jobUrl, jobNote, 0, [0]);
-		this.container.insertBefore(div, beforeElement);
-		// Filter hasn't changed, but we might need to filter out the new job, or
-		// add/remove log-window-expanded class
-		this.applyFilter();
+		const jobHeader = h("div", { className: "job-header" }, [statsElements.jobInfo, h("span", { className: "job-ident" }, ident)]);
+
+		return [jobHeader, statsElements, jobUrl, jobNote];
+	}
+
+	_addJobHistoryHeader(jobData, changed) {
+		const [jobHeader, statsElements, jobUrl, jobNote] = this._createJobHeader(jobData);
+		const info = new JobRenderInfo(null, null, statsElements, jobUrl, jobNote, null, null);
+		this.updateHeader(info, jobData);
+
+		const summary = byId(`log-container-${jobData.ident}`).querySelector(".job-history-summary");
+		summary.removeAttribute("aria-disabled");
+		summary.after(jobHeader);
+
+		let log = '';
+		for (const key of changed) {
+			log += `${key} ${jobData[key]} -> ${this.jobs.history[jobData.ident][0][key]}, `;
+		}
+		summary.after(log);
+		summary.after(h('br'));
+
+		/*
+		summary.after(JSON.stringify(jobData, undefined, 2));
+		summary.after(h('br'));
+		summary.after(JSON.stringify(this.jobs.history[jobData.ident], undefined, 2));
+		summary.after(h('br'));
+		*/
+
 	}
 
 	_renderDownloadLine(data, logSegment) {
@@ -576,13 +667,14 @@ class JobsRenderer {
 
 	handleData(data) {
 		const jobData = data.job_data;
-		const added = this.jobs.handleJobData(jobData);
+		const ident = jobData.ident;
+		const [added, changed] = this.jobs.handleJobData(jobData);
 		this.numCrawls.textContent = this.jobs.countActive();
 		if (added) {
 			this._createLogContainer(jobData);
+		} else if (changed.length) {
+			this._addJobHistoryHeader(this.jobs.history[ident][1], changed);
 		}
-		const type = data.type;
-		const ident = jobData.ident;
 
 		const info = this.renderInfo[ident];
 		if (!info) {
@@ -590,22 +682,17 @@ class JobsRenderer {
 			return;
 		}
 
-		const totalResponses = parseInt(getTotalResponses(jobData));
-		let linesRendered;
-		if (type === "download") {
-			linesRendered = this._renderDownloadLine(data, info.logSegment);
-		} else if (type === "stdout") {
-			linesRendered = this._renderStdoutLine(data, info.logSegment, info, ident);
-		} else if (type === "ignore") {
-			linesRendered = this._renderIgnoreLine(data, info.logSegment);
-		} else {
-			assert(false, `Unexpected message type ${type}`);
-		}
+		this.updateHeader(info, jobData);
+		this.updateLogs(ident, info, data);
+	}
+
+	updateHeader(info, jobData) {
 
 		// Update stats
 		info.statsElements.mb.textContent = numberWithCommas(
 			toStringTenths((parseInt(jobData.bytes_downloaded) / (1000 * 1000)).toString()),
 		);
+		const totalResponses = parseInt(getTotalResponses(jobData));
 		info.statsElements.responses.textContent = `${numberWithCommas(totalResponses)} resp.`;
 		info.statsElements.responses.title = getSummaryResponses(jobData);
 		const duration = Date.now() / 1000 - parseFloat(jobData.started_at);
@@ -648,6 +735,22 @@ class JobsRenderer {
 			info.jobUrl.removeAttribute("title");
 		} else {
 			info.jobUrl.title = jobData.note;
+		}
+
+	}
+
+	updateLogs(ident, info, data) {
+		const type = data.type;
+
+		let linesRendered;
+		if (type === "download") {
+			linesRendered = this._renderDownloadLine(data, info.logSegment);
+		} else if (type === "stdout") {
+			linesRendered = this._renderStdoutLine(data, info.logSegment, info, ident);
+		} else if (type === "ignore") {
+			linesRendered = this._renderIgnoreLine(data, info.logSegment);
+		} else {
+			assert(false, `Unexpected message type ${type}`);
 		}
 
 		info.lineCountWindow += linesRendered;

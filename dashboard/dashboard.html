@@ -106,6 +106,19 @@ html, body, .job-ident {
 	cursor: default;
 }
 
+.job-history-summary {
+	list-style-position: outside;
+}
+
+.job-history-summary[aria-disabled="true"] {
+	list-style: none;
+	pointer-events: none;
+}
+
+.job-history-summary[aria-disabled="true"] > * {
+	pointer-events: auto;
+}
+
 .stats-elements {
 	contain: strict;
 	content-visibility: auto;
