@@ -163,6 +163,12 @@ html, body, .job-ident {
 	white-space: pre;
 }
 
+.job-ts-aligned {
+	width: 260px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .job-url {
 	font-family: sans-serif;
 	text-decoration: none;
@@ -240,6 +246,11 @@ html, body, .job-ident {
 	text-align: right;
 	font-family: monospace;
 	color: rgb(0 0 0 / 60%);
+	display: list-item;
+	list-style-type: "🗙";
+	list-style-position: outside;
+	direction: rtl;
+	text-align: right;
 }
 
 .log-window {
@@ -465,56 +476,71 @@ kbd {
 	content-visibility: hidden;
 }
 </style>
+<style id="job-type-aligned">
+.job-type-aligned {
+	width: 4.5ch;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+</style>
+
 <div id="context-menu"></div>
 <div class="padded-page">
 	<div class="header">
 		<div>
 			<details class="drop-down">
 			<summary title="Show menu for more ArchiveBot links"><a href="https://wiki.archiveteam.org/index.php/ArchiveBot" class="underlined-a">ArchiveBot</a></summary>
-			<a href="3" class="underlined-a" id="alt">Alt dash</a><br>
-			<a href="ircs://irc.hackint.org/#archivebot" class="underlined-a">Chat</a>
-			(<a href="https://chat.hackint.org/?join=%23archivebot" class="underlined-a">web</a>)<br>
-			<a href="pipelines" class="underlined-a">Pipelines</a><br>
-			(<a href="https://nulldata.foo/archivebot/pipejobcount.php" class="underlined-a">Details</a>)<br>
-			<a href="https://github.com/ArchiveTeam/ArchiveBot" class="underlined-a">Code</a><br>
+			<a href="3" class="underlined-a" id="alt" title="Alternative dashboard (beta)">Alt dash</a><br>
+			<a href="https://chat.hackint.org/?join=%23archivebot" class="underlined-a" title="Webchat">Chat</a>
+			(<a href="ircs://irc.hackint.org/#archivebot" class="underlined-a" title="Chat in your IRC client">IRC</a>)<br>
+			<a href="pipelines" class="underlined-a" title="Pipeline server status">Pipeline</a>(<a href="https://nulldata.foo/archivebot/pipejobcount.php" class="underlined-a">s</a>)<br>
+			<a href="https://transfer.archivete.am/" class="underlined-a" title="Upload URL text files">Transfer</a><br>
+			<a href="https://github.com/ArchiveTeam/ArchiveBot" class="underlined-a" title="ArchiveBot source code">Code</a><br>
 			</details>
 			<details class="drop-down">
 			<summary title="Show menu for other crawl information links"><span id="num-crawls">0</span> crawls</summary>
-			<a href="pending" class="underlined-a">Pending</a><br>
-			<a href="logs/recent" class="underlined-a">Monitor</a><br>
-			<a href="finished" class="underlined-a" id="crawls-finished">Finished</a><br>
-			<a href="https://archive.fart.website/archivebot/viewer/" class="underlined-a">Uploaded</a><br>
-			<a href="https://archive.org/details/archivebot" class="underlined-a">Data</a><br>
+			<a href="pending" class="underlined-a" title="Pending/queued jobs">Pending</a><br>
+			<a href="logs/recent" class="underlined-a" title="Recently active jobs">Recent</a><br>
+			<a href="finished" class="underlined-a" id="crawls-finished" title="Recently finished jobs">Finished</a><br>
+			<a href="https://archive.fart.website/archivebot/viewer/" class="underlined-a" title="Uploaded and indexed jobs" id="crawls-viewer">Viewer</a><br>
+			<a href="https://archive.org/details/archivebot" class="underlined-a" title="Archived job data">Archive</a><br>
 			</details>
 			<details class="drop-down">
 			<summary title="Show menu for more documentation links"><a href="https://archivebot.readthedocs.io/" class="underlined-a">Docs</a></summary>
-			<a href="https://archivebot.readthedocs.io/en/latest/commands.html" class="underlined-a">Cmds</a><br>
-			<a href="https://github.com/ArchiveTeam/ArchiveBot/tree/master/db/ignore_patterns" class="underlined-a">Ignores</a><br>
-			(<a href="https://wiki.archiveteam.org/index.php/ArchiveBot/Ignore" class="underlined-a">Tips</a>)<br>
-			<a href="https://wiki.archiveteam.org/index.php/ArchiveBot#Usage_tips" class="underlined-a">Tricks</a><br>
-			<a href="https://wiki.archiveteam.org/index.php/ArchiveBot" class="underlined-a">Wiki</a><br>
+			<a href="https://archivebot.readthedocs.io/en/latest/commands.html" class="underlined-a" title="Commmands">Cmds</a><br>
+			<a href="https://github.com/ArchiveTeam/ArchiveBot/tree/master/db/ignore_patterns" class="underlined-a" title="Available ignoresets">Ignores</a><br>
+			(<a href="https://wiki.archiveteam.org/index.php/ArchiveBot/Ignore" class="underlined-a" title="Extra ignore information">More</a>)<br>
+			<a href="https://wiki.archiveteam.org/index.php/ArchiveBot#Usage_tips" class="underlined-a" title="Usage tips and tricks">Tips</a><br>
+			<a href="https://wiki.archiveteam.org/index.php/ArchiveBot" class="underlined-a" title="ArchiveBot wiki page">Wiki</a><br>
 			</details>
 			<details class="drop-down">
-			<summary>Logs</summary>
+			<summary title="Show logs for jobs where the filter regex matches the selected metadata items">Filter</summary>
 			<div id="filter-types">
-			Search:<br>
 			<input type="checkbox" id="filter-job-id" onclick="ds.jobsRenderer.applyFilter();" checked>
-			<label class="filter-job" for="filter-job-id">ID</label><br>
+			<label for="filter-job-id">ID</label><br>
 			<input type="checkbox" id="filter-job-url" onclick="ds.jobsRenderer.applyFilter();" accesskey="u" checked>
-			<label class="filter-job" for="filter-job-url">URL</label><br>
-			<input type="checkbox" id="filter-job-note" onclick="ds.jobsRenderer.applyFilter();" accesskey="e" checked>
-			<label class="filter-job" for="filter-job-note" title="Explain">Note</label><br>
-			<input type="checkbox" id="filter-job-pipeline" onclick="ds.jobsRenderer.applyFilter();" accesskey="p" checked>
-			<label class="filter-job" for="filter-job-pipeline">Pipe</label><br>
+			<label for="filter-job-url">URL</label><br>
+			<label title="Explain">
+				<input type="checkbox" id="filter-job-note" onclick="ds.jobsRenderer.applyFilter();" accesskey="e" checked>
+				Note
+			</label><br>
+			<label title="Pipeline">
+				<input type="checkbox" id="filter-job-pipeline" onclick="ds.jobsRenderer.applyFilter();" accesskey="p" checked>
+				Pipe
+			</label><br>
 			</div>
 			</details>
-			<input id="filter-box" type="text" size="21" title="Show logs for jobs matching this regular expression. For example ^https?://.*">
-			<input id="set-filter-all" onclick="ds.setFilter('');" type="button" value="All"  class="button">
-			<input id="set-filter-none" onclick="ds.setFilter('^$');" type="button" value="None" class="button">
-			<input type="checkbox" id="show-all-headers" onclick="ds.showAllHeaders(this.checked);">
-			<label for="show-all-headers">All headers</label>
+			<input id="filter-box" type="text" size="21" title="Show logs for jobs where this regular expression matches metadata.
+Defaults to matching case-insensitively, for case-sensitivity: (?-i:...)
+For example: 1s1f1|example\.org|proactive|expipe">
+			<input id="set-filter-all" onclick="ds.setFilter('');" type="button" value="All" title="Show logs for all jobs" class="button">
+			<input id="set-filter-none" onclick="ds.setFilter('^$');" type="button" value="None" title="Hide logs for all jobs" class="button">
+			<label title="Show info headers for jobs that do not match the filter">
+				<input type="checkbox" id="show-all-headers" onclick="delete this.dataset.auto; ds.showAllHeaders(this.checked);">
+				All headers
+			</label>
 			<details class="drop-down">
-			<summary>Jobs</summary>
+			<summary title="Show info and logs for jobs with these statuses">Status</summary>
 			<input type="checkbox" id="show-queued-jobs" onclick="ds.showQueuedJobs(this.checked);" accesskey="q">
 			<label class="job-info-queued" for="show-queued-jobs">Queued</label><br>
 			<input type="checkbox" id="show-running-jobs" onclick="ds.showRunningJobs(this.checked);" accesskey="r">
@@ -603,6 +629,7 @@ kbd {
 				URL parameters:
 			</p>
 			<ul>
+				<li>To initially open the dropdowns at the top, add <kbd><span class="url-q-or-amp">?</span>openHeader=1</kbd> to the dashboard URL. The default is to collapse them.</li>
 				<li>To specify an initial filter, add <kbd><span class="url-q-or-amp">?</span>initialFilter=TEXT</kbd> to the dashboard URL. The default is <kbd>^$</kbd>.</li>
 				<li>To initially disable filtering by job details, add these to the dashboard URL. The default is to filter by them.
 					<kbd><span class="url-q-or-amp">?</span>filterJobID=0</kbd>

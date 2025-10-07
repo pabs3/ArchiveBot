@@ -9,6 +9,13 @@ String.prototype.removePrefix = function (prefix) {
     return this.startsWith(prefix) ? this.substr(prefix.length) : this.toString();
 };
 
+// FIXME: add HTMLAnchorElement searchParams object instead
+HTMLAnchorElement.prototype.setSearchParam = function (key, value) {
+	const search = new URLSearchParams(this.search);
+	search.set(key, value);
+	this.search = search;
+}
+
 function assert(condition, message) {
 	if (!condition) {
 		throw message || "Assertion failed";
@@ -162,23 +169,69 @@ function removeFromArray(arr, item) {
 
 /*** End of utility code ***/
 
+// FIXME: update the backend instead
+// /logs/recent job data has several differences to WebSocket job data
+const recent_copy_back = ["no_offsite_links", "user_agent", "slug", "url_file", "started_at"];
+// https://github.com/ArchiveTeam/ArchiveBot/issues/304
+const recent_rename = {fetch_depth: "depth"};
+const recent_delete_null = ["finished_at", "note"];
+const recent_delete_false = ["aborted", "finished"];
+const recent_to_string = [
+	"aborted",
+	"bytes_downloaded",
+	"concurrency",
+	"delay_max",
+	"delay_min",
+	"error_count",
+	"items_downloaded",
+	"items_queued",
+	"queued_at",
+	"r1xx",
+	"r2xx",
+	"r3xx",
+	"r4xx",
+	"runk",
+	"started_at",
+	"warc_size",
+];
+const changedHighlight = {
+	concurrency: ".job-connections",
+	delay_min: ".job-delay",
+	delay_max: ".job-delay",
+	started_by: ".job-nick",
+	fetch_depth: ".job-type",
+	url_file: ".job-type",
+	note: ".job-note",
+	started_at: ".job-started",
+	pipeline_id: ".job-pipeline",
+	suppress_ignore_reports: ".job-ignores",
+};
+const changedShow = {
+	"started_in": "IRC",
+	"user_agent": "UA",
+	"note": "note",
+	"no_offsite_links": "offsite",
+	"queued_at": "queued",
+};
+
 class JobsTracker {
-	static tracked = {
+	static #tracked = {
 		"url": "https://digital.katalog.queersearch.org/",
 		"fetch_depth": "inf",
 		"user_agent": "",
-		"slug": "digital.katalog.queersearch.org-inf",
+		//"slug": "digital.katalog.queersearch.org-inf",
 		"started_by": "c3manu",
 		"started_in": "#archivebot",
 		"delay_min": "250",
 		"delay_max": "375",
-//		"settings_age": "6",
+//		"settings_age": "6", FIXME: use this to signal ignore changes?
 		"concurrency": "3",
 		"note": "proactive",
 		"suppress_ignore_reports": "true",
 		"queued_at": "1759430682",
 		"started_at": "1759430685.166338",
 		"pipeline_id": "pipeline:fdf7050af2a290e3cdd42947358ee578",
+		"no_offsite_links": "true",
 //		"error_count": "58",
 //		"death_timer": "0",
 	};
@@ -203,7 +256,7 @@ class JobsTracker {
 	/**
 	 * Returns true if a new job was added
 	 */
-	handleJobData(jobData) {
+	handleJobData(jobData, recent) {
 		const ident = jobData.ident;
 		const alreadyKnown = ident in this.known;
 		let jobDataChanged = [];
@@ -212,18 +265,32 @@ class JobsTracker {
 			this.sorted.push(jobData);
 			this.resort();
 			this.history[ident] = [jobData];
+			this.history[ident][0]._recent = recent;
 		} else {
-			for (const key of Object.keys(JobsTracker.tracked)) {
+			// FIXME: update the backend instead
+			// /logs/recent job data has missing/reduced items
+			// so at the transition from recent to live data
+			// copy them back to the last recent data item
+			// since they were probably the same then
+			// despite not being transmitted then
+			if (!recent && this.history[ident][0]._recent) {
+				for (const key of recent_copy_back) {
+					this.history[ident][0][key] = jobData[key];
+				}
+			}
+			for (const key of Object.keys(JobsTracker.#tracked)) {
 				if (jobData[key] !== this.history[ident][0][key]) {
 					jobDataChanged.push(key);
 				}
 			}
 			if (jobDataChanged.length !== 0){
+				/*
 				let log = `${ident} `;
 				for (const key of jobDataChanged) {
 					log += `${key} ${this.history[ident][0][key]} => ${jobData[key]}, `;
 				}
 				console.log(log);
+				*/
 				this.history[ident].unshift(jobData);
 			}
 		}
@@ -258,10 +325,11 @@ class JobsTracker {
 }
 
 class JobRenderInfo {
-	constructor(logWindow, logSegment, statsElements, jobUrl, jobNote, lineCountWindow, lineCountSegments) {
+	constructor(logWindow, logSegment, statsElements, jobType, jobUrl, jobNote, lineCountWindow, lineCountSegments) {
 		this.logWindow = logWindow;
 		this.logSegment = logSegment;
 		this.statsElements = statsElements;
+		this.jobType = jobType;
 		this.jobUrl = jobUrl;
 		this.jobNote = jobNote;
 		this.lineCountWindow = lineCountWindow;
@@ -313,12 +381,49 @@ function getSummaryResponses(jobData) {
 Unknown: ${numberWithCommas(jobData.runk)}`;
 }
 
+class JobStatus {
+	constructor(classList) {
+		this.classList = classList;
+		this.prefix = "job-info-";
+	}
+
+	get() {
+		return [...this.classList].flatMap((i) => {
+			return i.startsWith(this.prefix) ? [this.substr(this.prefix.length)] : [];
+		});
+	}
+
+	unset() {
+		const status_classes = [...this.classList].filter((i) => i.startsWith(this.prefix));
+		if (status_classes.length) {
+			this.classList.remove(status_classes);
+		}
+	}
+
+	set(status) {
+		this.unset();
+		if (status !== "running") {
+			this.classList.add(this.prefix + status);
+		}
+	}
+}
+
+const EOL = /[\r\n]+$/;
+const fatalStdout = /^CRITICAL (Sorry|Please report)|^ERROR Fatal exception|No space left on device|^Fatal Python error:|^(Thread|Current thread) 0x/;
+const failedStdout = /^ *0 bytes\.$/;
+
 class JobsRenderer {
 	constructor(container, filterBox, historyLines, showNicks, contextMenuRenderer) {
 		this.container = container;
 		this.filterBox = filterBox;
 		this.filterTimeout = null;
 		this.filterBox.onchange = (e) => {
+
+			byId("alt").setSearchParam("initialFilter", this.filterBox.value);
+			byId("beta").setSearchParam("initialFilter", this.filterBox.value);
+			byId("crawls-finished").setSearchParam("initialFilter", this.filterBox.value);
+			byId("crawls-viewer").setSearchParam("q", this.filterBox.value);
+
 			const repeats = [
 					"insertText",
 					"deleteContent",
@@ -418,10 +523,10 @@ class JobsRenderer {
 
 		const logWindow = h("div", logWindowAttrs, logSegment);
 
-		const [jobHeader, statsElements, jobUrl, jobNote] = this._createJobHeader(jobData);
+		const [jobHeader, statsElements, jobType, jobUrl, jobNote] = this._createJobHeader(jobData);
 
 		const div = h("div", { className: "log-container", id: `log-container-${ident}` }, [
-			h("details", { open: true }, [
+			h("details", null, [
 				h("summary", {
 					className: "job-history-summary",
 					ariaDisabled: "true",
@@ -438,11 +543,15 @@ class JobsRenderer {
 			logWindow,
 		]);
 
-		this.renderInfo[ident] = new JobRenderInfo(logWindow, logSegment, statsElements, jobUrl, jobNote, 0, [0]);
+		this.renderInfo[ident] = new JobRenderInfo(logWindow, logSegment, statsElements, jobType, jobUrl, jobNote, 0, [0]);
 		this.container.insertBefore(div, beforeElement);
 		// Filter hasn't changed, but we might need to filter out the new job, or
 		// add/remove log-window-expanded class
 		this.applyFilter();
+	}
+
+	jobTypeText(jobData) {
+		return (jobData.fetch_depth === "shallow" ? "!ao" : jobData.fetch_depth === "inf" ? "!a" : "?") + ("url_file" in jobData ? " <" : "");
 	}
 
 	_createJobHeader (jobData) {
@@ -480,9 +589,12 @@ class JobsRenderer {
 		};
 
 		const startedISOString = new Date(parseFloat(jobData.started_at) * 1000).toISOString();
+		const jobType = h("span", { className: `inline-stat ${maybeAligned("job-type")}` }, [this.jobTypeText(jobData)]);
 		const jobNote = h("span", { className: maybeAligned("job-note") }, null);
 
 		statsElements.jobInfo = h("span", { className: "job-info" }, [
+			jobType,
+			" ",
 			h("a", {
 				className: `inline-stat ${maybeAligned("job-url")}`,
 				href: jobData.url,
@@ -496,19 +608,20 @@ class JobsRenderer {
 					className: "stats-elements",
 					onclick: (ev) => {
 						const filter = ds.getFilter();
-						if (RegExp(filter).test(jobData.url) && filter.startsWith("^") && filter.endsWith("$")) {
-							// If we're already showing just this log window, go back
-							// to showing nothing.
-							ds.setFilter("^$");
+						if (RegExp(filter).test(jobData.url) && filter.startsWith("(?-i:^") && filter.endsWith("$)")) {
+							// If we're already showing just this log window,
+							// go to the previous filter, usually showing nothing.
+							ds.setFilter(ds.previousFilter);
 						} else {
-							ds.setFilter(`^${regExpEscape(jobData.url)}$`);
+							ds.setFilter(`(?-i:^${regExpEscape(jobData.url)}$)`);
 						}
 						ev.stopPropagation();
+						ev.preventDefault();
 					},
 				},
 				[
 					" on ",
-					h("span", { className: "inline-stat", title: startedISOString }, startedISOString.split("T")[0].substr(5)),
+					h("span", { className: "inline-stat job-started", title: startedISOString }, startedISOString.split("T")[0].substr(5)),
 					h(
 						"span",
 						{ className: `inline-stat ${maybeAligned("job-nick")}` },
@@ -534,35 +647,73 @@ class JobsRenderer {
 				],
 			),
 		]);
+
 		const jobUrl = statsElements.jobInfo.querySelector(".job-url");
+		jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.archivete.am/").removePrefix("/inline/");
+		if (jobUrl.href !== jobUrl.textContent) {
+			jobUrl.href = "https://transfer.archivete.am/inline/" + jobUrl.textContent;
+			jobUrl.textContent = jobUrl.textContent.split("/", 2)[1];
+		}
 
 		const jobHeader = h("div", { className: "job-header" }, [statsElements.jobInfo, h("span", { className: "job-ident" }, ident)]);
 
-		return [jobHeader, statsElements, jobUrl, jobNote];
+		return [jobHeader, statsElements, jobType, jobUrl, jobNote];
 	}
 
 	_addJobHistoryHeader(jobData, changed) {
-		const [jobHeader, statsElements, jobUrl, jobNote] = this._createJobHeader(jobData);
-		const info = new JobRenderInfo(null, null, statsElements, jobUrl, jobNote, null, null);
+
+		const maybeAligned = (className) => {
+			let s = className;
+			if (this._aligned) {
+				s += ` ${className}-aligned`;
+			}
+			return s;
+		};
+
+		const [jobHeader, statsElements, jobType, jobUrl, jobNote] = this._createJobHeader(jobData);
+		const info = new JobRenderInfo(null, null, statsElements, jobType, jobUrl, jobNote, null, null);
 		this.updateHeader(info, jobData);
+
+		//statsElements.jobInfo.querySelector(".job-type").style.textAlign = "right";
+
+		statsElements.jobInfo.querySelector(".job-url").remove();
+
+		const tsISOString = new Date(parseFloat(jobData.ts) * 1000).toISOString();
+		const ts = h("span", { className: `inline-stat ${maybeAligned("job-ts")}` }, tsISOString);
+		//statsElements.jobInfo.prepend(ts);
+		statsElements.jobInfo.querySelector(".job-type").after(ts);
+		statsElements.jobInfo.querySelector(".job-type").after(" ");
+
+		statsElements.jobInfo.querySelector(".stats-elements").removeAttribute("onclick");
+		statsElements.jobInfo.querySelector(".stats-elements").style.pointer = "initial";
+		statsElements.jobInfo.querySelector(".stats-elements").style.backgroundColor = "initial";
+		//statsElements.jobInfo.querySelector(".stats-elements").style.paddingLeft = "4px"; // FIXME: do it without magic padding
+
+		for (const [change, element] of Object.entries(changedHighlight)) {
+			if (changed.includes(change)){
+				jobHeader.querySelector(element).style.background = "rgb(255 255 255 / 40%)";
+			}
+		}
+
+		const changes = h("span", { className: "job-changes" });
+		for (const [change, text] of Object.entries(changedShow)) {
+			if (changed.includes(change)){
+				if (changes.textContent.length) {
+					changes.textContent += ", ";
+				} else {
+					statsElements.jobInfo.append("; ");
+					statsElements.jobInfo.append(changes);
+					changes.style.background = "rgb(255 255 255 / 40%)";
+				}
+				changes.textContent += `${text} ${jobData[change]} -> ${this.jobs.history[jobData.ident][0][change]}`
+			}
+		}
+
+		jobHeader.querySelector(".job-ident").remove();
 
 		const summary = byId(`log-container-${jobData.ident}`).querySelector(".job-history-summary");
 		summary.removeAttribute("aria-disabled");
 		summary.after(jobHeader);
-
-		let log = '';
-		for (const key of changed) {
-			log += `${key} ${jobData[key]} -> ${this.jobs.history[jobData.ident][0][key]}, `;
-		}
-		summary.after(log);
-		summary.after(h('br'));
-
-		/*
-		summary.after(JSON.stringify(jobData, undefined, 2));
-		summary.after(h('br'));
-		summary.after(JSON.stringify(this.jobs.history[jobData.ident], undefined, 2));
-		summary.after(h('br'));
-		*/
 
 	}
 
@@ -577,6 +728,7 @@ class JobsRenderer {
 		} else {
 			attrs = Reusable.obj_className_line_normal;
 		}
+		attrs['title'] = new Date(parseFloat(data.ts) * 1000).toISOString();
 		const url = data.url;
 		// For testing a URL with characters that browsers like to escape, breaking the suggested ignores
 		// url = "http://example.com/m/index.php/{$ibforums-%3Evars[TEAM_ICON_URL]}/t82380.html^hi";
@@ -609,7 +761,8 @@ class JobsRenderer {
 	}
 
 	_renderStdoutLine(data, logSegment, info, ident) {
-		const cleanedMessage = data.message.replace(/[\r\n]+$/, "");
+		const jobData = data.job_data;
+		const cleanedMessage = data.message.replace(EOL, "");
 		let renderedLines = 0;
 		if (!cleanedMessage) {
 			return renderedLines;
@@ -625,50 +778,35 @@ class JobsRenderer {
 			// Check for several completion messages
 			// because some of them are often missing
 			// Ignore error jobs as they get done messages.
-			if (!info.statsElements.jobInfo.classList.contains("job-info-fatal") &&
-			    !info.statsElements.jobInfo.classList.contains("job-info-aborted") &&
-			    !info.statsElements.jobInfo.classList.contains("job-info-failed") &&
-			    /^ *[1-9][0-9]* bytes\.$|^Starting (RelabelIfAborted|MarkItemAsDone) for Item$|^Finished (WgetDownload|MoveFiles|StopHeartbeat) for Item$/.test(line)) {
-				info.statsElements.jobInfo.classList.add("job-info-done");
-				this.jobs.markFinished(ident);
-			} else if (/^ *0 bytes\.$/.test(line)) {
-				info.statsElements.jobInfo.classList.add("job-info-failed");
-			} else if (
-				/^CRITICAL (Sorry|Please report)|^ERROR Fatal exception|No space left on device|^Fatal Python error:|^(Thread|Current thread) 0x/.test(
-					line,
-				)
-			) {
-				info.statsElements.jobInfo.classList.add("job-info-fatal");
-				this.jobs.markFatalException(ident);
-			} else if (/Script requested immediate stop|^Adjusted target WARC path to.*-aborted$/.test(line)) {
-				// Note: above message can be in:
-				// ERROR Script requested immediate stop
-				// or after an ERROR Fatal exception:
-				// wpull.hook.HookStop: Script requested immediate stop.
-				//
-				// Also check for "Adjusted target WARC path" because
-				// the exception may be entirely missing.
-				info.statsElements.jobInfo.classList.remove("job-info-fatal");
-				info.statsElements.jobInfo.classList.add("job-info-aborted");
-			} else if (/^Queued item /.test(line)) {
-				info.statsElements.jobInfo.classList.add("job-info-queued");
-			} else if (/^Received item /.test(line)) {
-				// Clear other statuses if a job restarts with the same job ID
-				info.statsElements.jobInfo.classList.remove("job-info-queued");
-				info.statsElements.jobInfo.classList.remove("job-info-done");
-				info.statsElements.jobInfo.classList.remove("job-info-failed");
-				info.statsElements.jobInfo.classList.remove("job-info-fatal");
-				info.statsElements.jobInfo.classList.remove("job-info-aborted");
-				this.jobs.markUnfinished(ident);
+			let status = new JobStatus(info.statsElements.jobInfo.classList);
+			if ("queued_at" in jobData) {
+				if ("started_at" in jobData) {
+					if ("aborted" in jobData && jobData.aborted === "true") {
+						status.set("aborted");
+					} else if (fatalStdout.test(line)) {
+						status.set("fatal");
+						this.jobs.markFatalException(ident);
+					} else if (failedStdout.test(line)) {
+						status.set("failed");
+					} else if ("finished_at" in jobData) {
+						status.set("done");
+						this.jobs.markFinished(ident);
+					} else {
+						status.set("running");
+						this.jobs.markUnfinished(ident);
+					}
+				} else {
+					status.set("queued");
+				}
 			}
 		}
 		return renderedLines;
 	}
 
-	handleData(data) {
+	handleData(data, recent) {
 		const jobData = data.job_data;
 		const ident = jobData.ident;
-		const [added, changed] = this.jobs.handleJobData(jobData);
+		const [added, changed] = this.jobs.handleJobData(jobData, recent);
 		this.numCrawls.textContent = this.jobs.countActive();
 		if (added) {
 			this._createLogContainer(jobData);
@@ -725,9 +863,9 @@ class JobsRenderer {
 			}
 		}
 
-		// Update pipeline in case a job is restarted on another pipline
-		const pipeline = info.statsElements.pipeline;
-		[pipeline.title, pipeline.textContent] = this.pipelineInfo(jobData);
+		// Update job type in case a job is restarted in another way
+		// FIXME: also because the url_file is not present in /logs/recent
+		info.jobType.textContent = this.jobTypeText(jobData);
 
 		// Update note
 		info.jobNote.textContent = isBlank(jobData.note) ? "" : ` (${jobData.note})`;
@@ -737,6 +875,9 @@ class JobsRenderer {
 			info.jobUrl.title = jobData.note;
 		}
 
+		// Update pipeline in case a job is restarted on another pipline
+		const pipeline = info.statsElements.pipeline;
+		[pipeline.title, pipeline.textContent] = this.pipelineInfo(jobData);
 	}
 
 	updateLogs(ident, info, data) {
@@ -793,7 +934,7 @@ class JobsRenderer {
 	}
 
 	applyFilter() {
-		const query = RegExp(this.filterBox.value);
+		const query = RegExp(this.filterBox.value, "i");
 		let matches = 0;
 		const matchedWindows = [];
 		const unmatchedWindows = [];
@@ -849,6 +990,7 @@ class JobsRenderer {
 		}
 	}
 
+
 	showNextPrev(offset) {
 		let idx;
 		if (this.firstFilterMatch == null) {
@@ -864,6 +1006,7 @@ class JobsRenderer {
 			idx = this.jobs.sorted.length;
 		}
 		idx = idx + offset;
+		// FIXME: ignore jobs not visible
 		// When reaching either end, hide all job windows.  When going past
 		// the end, wrap around.
 		if (idx === -1) {
@@ -875,7 +1018,7 @@ class JobsRenderer {
 			ds.setFilter("^$");
 		} else {
 			const newShownJob = this.jobs.sorted[idx];
-			ds.setFilter(`^${regExpEscape(newShownJob.url)}$`);
+			ds.setFilter(`(?-i:^${regExpEscape(newShownJob.url)}$)`);
 		}
 	}
 
@@ -885,6 +1028,8 @@ class JobsRenderer {
 		}
 		this._aligned = aligned;
 		const adderOrRemover = aligned ? classAdder : classRemover;
+		Array.from(document.querySelectorAll(".job-ts")).map(adderOrRemover("job-ts-aligned"));
+		Array.from(document.querySelectorAll(".job-type")).map(adderOrRemover("job-type-aligned"));
 		Array.from(document.querySelectorAll(".job-url")).map(adderOrRemover("job-url-aligned"));
 		Array.from(document.querySelectorAll(".job-note")).map(adderOrRemover("job-note-aligned"));
 		Array.from(document.querySelectorAll(".job-nick")).map(adderOrRemover("job-nick-aligned"));
@@ -903,10 +1048,28 @@ class JobsRenderer {
 	}
 }
 
+// FIXME: load all the regexes instead?
+const igsetMap = {
+	badvideos: "vp.nyt.com video1.nytimes.com videos.usatoday.net",
+	blogs: "wordpress /wp- blogspot blogger.com livejournal dreamwidth tumblr",
+	coppermine: "displayimage",
+	dreamwidth: "dreamwidth livejournal",
+	dspace6: "/discover? /search-filter? /simple-search? dateIssued_page=",
+	facebook: "facebook.com instagram.com meta.com threads.com",
+	forums: "/viewtopic.php /showpost.php /profile.php",
+	github: "github",
+	mediawiki: "Special: Category: User: Property:",
+	meetupeverywhere: "meetup.com",
+	nosortedindex: "?C=",
+	notumblrnotes: "tumblr",
+	pinterest: "pinterest.com",
+	reddit: "reddit.com redd.it",
+	singletumblr: "tumblr",
+}
 /**
- * This context menu pops up when you right-click on a URL in
+ * This context menu pops up when you right-click anywhere in
  * a log window, helping you copy an !ig command based on the URL
- * you right-clicked.
+ * you right-clicked, and other useful commands too.
  */
 class ContextMenuRenderer {
 	constructor() {
@@ -916,7 +1079,7 @@ class ContextMenuRenderer {
 	}
 
 	/**
-	 * Returns true if the event target is a URL in a log window
+	 * Returns true if the event target is a line in a log window
 	 */
 	clickedOnLogWindowURL(ev) {
 		const cn = ev.target.className;
@@ -946,40 +1109,90 @@ class ContextMenuRenderer {
 		return paths;
 	}
 
-	getSuggestedCommands(ident, url, maxSuggestedIgnores) {
+	getIgsetCommands(ident, url) {
+		const commands = [];
+		for (const [igset, includes] of Object.entries(igsetMap)) {
+			if (includes.split(' ').some(i => url.includes(i))) {
+				commands.push(`!igset ${ident} ${igset}`);
+			}
+		}
+		return commands;
+	}
+	getPathIgnoreCommands(ident, url, maxSuggestedIgnores) {
 		// For testing a URL with enough path segments to cause [N more ignore suggestions]
 		// url = "https://example.com/asset/620787/liveblog/api/cms/modules/cms/modules/cms/modules/cms/modules/cms/modules/cms/modules/";
 		const schema = url.split(":")[0];
-		const domain = url.split("/")[2];
-		const withoutQuery = url.split("?")[0];
+		const domain = url.split("/")[2].split(":");
+		const [withoutQuery, query] = url.split("?", 2);
 		const path = `/${split(withoutQuery, "/", 3)[3]}`;
 		const reSchema = schema.startsWith("http") ? "https?" : "ftp";
 		const pathVariants = this.getPathVariants(path);
 		let somePathVariants = pathVariants.slice(-maxSuggestedIgnores);
 		let ignoresRemaining = pathVariants.length - somePathVariants.length;
+		let menuVariants = [];
+
 		// If only 1 more suggested ignore available, just put it in the context menu
 		// to avoid a [... more ignore suggestions] taking up the same amount of space.
 		if (ignoresRemaining === 1) {
 			somePathVariants = pathVariants;
 			ignoresRemaining = 0;
 		}
+		if (ignoresRemaining === 0 && query) {
+			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?" + query)}$`);
+		}
+		menuVariants.push(...somePathVariants.map((p) => {
+			return `!ig ${ident} ^${reSchema}://${regExpEscape(domain + p)}`;
+		}));
+		if (ignoresRemaining === 0 && !query) {
+			menuVariants[0] += "$";
+		}
 		return [
 			ignoresRemaining,
-			somePathVariants
-				.map((p) => {
-					return `!ig ${ident} ^${reSchema}://${regExpEscape(domain + p)}`;
-				})
-				.concat([`!d ${ident} 180000 180000`, `!d ${ident} 250 375`, `!con ${ident} 1`]),
+			menuVariants,
 		];
 	}
 
-	makeEntries(ident, url, maxSuggestedIgnores) {
-		const [ignoresRemaining, commands] = this.getSuggestedCommands(ident, url, maxSuggestedIgnores);
-		const entries = [];
+	replaceIdent(str, ident) {
+		const _ident = ` ${ident}`;
+		const _ident_ = `${_ident} `;
+		if (str.endsWith(_ident))
+			return str.slice(0, -_ident.length) + " …";
+		else
+			return str.replace(_ident_, " … ");
+	}
+
+	makeCopyEntries(ident, entries, commands) {
+		for (const c of commands) {
+			entries.push(h("span", { onclick: this.makeCopyTextFn(c) }, `Copy ${this.replaceIdent(c, ident)}`));
+		}
+	}
+
+	makeAlwaysEntries(entries, ident, igon) {
+		// FIXME: make these dependent on the job status
+		// FIXME: put some of these side-by-side
+		this.makeCopyEntries(ident, entries, [
+			`!${igon} ${ident}`,
+			`!d ${ident} 3600000 3600000`,
+			`!d ${ident} 180000 180000`,
+			`!d ${ident} 250 375`,
+			`!con ${ident} 6`,
+			`!con ${ident} 3`,
+			`!con ${ident} 1`,
+			`!expire ${ident}`,
+			`!status ${ident}`,
+			`!whereis ${ident}`,
+			`!abort ${ident}`,
+		]);
+	}
+
+	makeUrlEntries(entries, ident, url, igon, maxSuggestedIgnores) {
+		const [ignoresRemaining, ignorePathCommands] = this.getPathIgnoreCommands(ident, url, maxSuggestedIgnores);
+		const igsetCommands = this.getIgsetCommands(ident, url);
 		// Unfortunately, this does not open it in a background tab
 		// like the real context menu does.
 		entries.push(h("a", { href: url }, "Open link in new tab"));
 		entries.push(h("span", { onclick: this.makeCopyTextFn(url) }, "Copy link address"));
+		this.makeCopyEntries(ident, entries, igsetCommands);
 		if (ignoresRemaining) {
 			entries.push(
 				h(
@@ -987,21 +1200,19 @@ class ContextMenuRenderer {
 					{
 						onclick: (ev) => {
 							ev.stopPropagation();
-							this.resetEntries(ident, url, maxSuggestedIgnores + 6);
+							this.resetEntries(ident, url, igon, maxSuggestedIgnores + 6);
 						},
 					},
 					`[${ignoresRemaining} more ignore suggestion${ignoresRemaining === 1 ? "" : "s"}]`,
 				),
 			);
 		}
-		for (const c of commands) {
-			entries.push(h("span", { onclick: this.makeCopyTextFn(c) }, `Copy ${c.replace(` ${ident} `, " … ")}`));
-		}
+		this.makeCopyEntries(ident, entries, ignorePathCommands);
 		return entries;
 	}
 
-	resetEntries(ident, url, maxSuggestedIgnores) {
-		console.log("resetEntries", ident, url, maxSuggestedIgnores);
+	resetEntries(ident, url, igon, maxSuggestedIgnores) {
+		if (this.debug) console.log("resetEntries", ident, url, igon, maxSuggestedIgnores);
 		removeChildren(this.element);
 		// We put the clipboard-scratchpad in the fixed-positioned
 		// context menu instead of elsewhere on the page, because
@@ -1010,7 +1221,9 @@ class ContextMenuRenderer {
 		// and we want to avoid such scrolling.
 		appendAny(this.element, h("input", { type: "text", id: "clipboard-scratchpad" }));
 
-		const entries = this.makeEntries(ident, url, maxSuggestedIgnores);
+		const entries = [];
+		if (url) this.makeUrlEntries(entries, ident, url, igon, maxSuggestedIgnores);
+		this.makeAlwaysEntries(entries, ident, igon);
 		for (const entry of entries) {
 			entry.classList.add("context-menu-entry");
 			appendAny(this.element, entry);
@@ -1034,8 +1247,9 @@ class ContextMenuRenderer {
 		// the DOM, while we want the original, unescaped characters to create
 		// the correct ignore pattern.
 		const url = ev.target.textContent;
+		const igon = ev.target.parentElement.parentElement.parentElement.parentElement.getElementsByClassName("job-ignores")[0].textContent === "igon" ? "igoff" : "igon";
 		const maxSuggestedIgnores = 8;
-		this.resetEntries(ident, url, maxSuggestedIgnores);
+		this.resetEntries(ident, url, igon, maxSuggestedIgnores);
 
 		// If the bottom of the context menu is outside the viewport, move the context
 		// menu up, so that it appears to have opened from its bottom-left corner.
@@ -1199,12 +1413,13 @@ class Dashboard {
 		const showNicks = args.showNicks ? Boolean(Number(args.showNicks)) : false;
 		const contextMenu = args.contextMenu ? Boolean(Number(args.contextMenu)) : true;
 		this.initialFilter = args.initialFilter ?? "^$";
+		this.previousFilter = this.initialFilter;
 		const filterJobID = args.filterJobID ? Boolean(Number(args.filterJobID)) : true;
 		const filterJobURL = args.filterJobURL ? Boolean(Number(args.filterJobURL)) : true;
 		const filterJobNote = args.filterJobNote ? Boolean(Number(args.filterJobNote)) : true;
 		const filterJobPipe = args.filterJobPipe ? Boolean(Number(args.filterJobPipe)) : true;
 		const filterJobNick = args.filterJobNick ? Boolean(Number(args.filterJobNick)) : true;
-		const showAllHeaders = args.showAllHeaders ? Boolean(Number(args.showAllHeaders)) : true;
+		const showAllHeaders = args.initialFilter && args.showAllHeaders ? Boolean(Number(args.showAllHeaders)) : true;
 		const showQueuedJobs = args.showQueuedJobs ? Boolean(Number(args.showQueuedJobs)) : true;
 		const showRunningJobs = args.showRunningJobs ? Boolean(Number(args.showRunningJobs)) : true;
 		const showFinishedJobs = args.showFinishedJobs ? Boolean(Number(args.showFinishedJobs)) : true;
@@ -1213,6 +1428,7 @@ class Dashboard {
 		const showAbortedJobs = args.showAbortedJobs ? Boolean(Number(args.showAbortedJobs)) : true;
 		const loadRecent = args.loadRecent ? Boolean(Number(args.loadRecent)) : true;
 		this.debug = args.debug ? Boolean(Number(args.debug)) : false;
+		const openHeader = args.openHeader ? Boolean(Number(args.openHeader)) : false;
 
 		// Append to page title to make it possible to identify the tab in Chrome's task manager
 		if (args.title) {
@@ -1220,7 +1436,7 @@ class Dashboard {
 		}
 
 		this.host = args.host ? args.host : location.hostname;
-		this.port = args.port ? `:${Number(args.port)}` : '';
+		this.port = args.port ? `:${Number(args.port)}` : "";
 		const wsproto = window.location.protocol === "https:" ? "wss:" : "ws:";
 		this.websocketUrl = args.websocketUrl ?? `${wsproto}//${this.host}:4568/stream`;
 
@@ -1261,26 +1477,31 @@ class Dashboard {
 			}
 		});
 
+		if (openHeader) {
+			const header = document.querySelector(".header");
+			for (const dropdown of document.getElementsByTagName("details")) {
+				dropdown.open = true;
+			}
+		}
+
 		if (!showNicks) {
 			addPageStyles(".job-nick-aligned { width: 0; }");
 		} else {
 			byId("filter-types").lastChild.after(
-				h("input", {
-					type: "checkbox",
-					id: "filter-job-nick",
-					onclick: () => { ds.jobsRenderer.applyFilter(); },
-					checked: true,
-				})
+				h("label", { title: "IRC nick" }, [
+					h("input", {
+						type: "checkbox",
+						id: "filter-job-nick",
+						onclick: () => { ds.jobsRenderer.applyFilter(); },
+						checked: true,
+					}),
+					" Nick",
+				])
 			);
-			byId("filter-types").lastChild.after("\n\t\t\t");
-			byId("filter-types").lastChild.after(
-				h("label", { className: "filter-job", htmlFor: "filter-job-nick", textContent: "Nick" }),
-			);
-			byId("filter-types").lastChild.after(h("br"));
-			byId("filter-types").lastChild.after("\n");
-			byId("crawls-finished").href += "?showNicks=1";
-			byId("alt").href += "?showNicks=1";
-			byId("beta").href += "?showNicks=1";
+			byId("filter-box").title += "|exnick";
+			byId("crawls-finished").setSearchParam("showNicks", "1");
+			byId("alt").setSearchParam("showNicks", "1");
+			byId("beta").setSearchParam("showNicks", "1");
 		}
 
 		byId("filter-job-id").checked = filterJobID;
@@ -1299,6 +1520,7 @@ class Dashboard {
 					id: "set-filter-initial",
 					onclick: () => { ds.setFilter(ds.initialFilter) },
 					value: "Initial",
+					title: "Reset the filter regex to the initialFilter parameter",
 				})
 			);
 			byId("set-filter-none").after("\n");
@@ -1340,7 +1562,7 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 						console.log(`Processing ${queue.length} JSON messages`);
 					}
 					for (const obj of queue) {
-						this.handleData(obj);
+						this.handleData(obj, false);
 					}
 				},
 				batchTimeWhenVisible,
@@ -1411,7 +1633,7 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 				try {
 					const recentLines = JSON.parse(xhr.responseText);
 					for (const line of recentLines) {
-						this.handleData(line);
+						this.handleRecentData(line);
 					}
 				} catch (e) {
 					console.log("Failed to load /logs/recent data:", e);
@@ -1486,12 +1708,45 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 		}
 	}
 
-	handleData(data) {
+	// FIXME: update the backend instead
+	// /logs/recent job data differs from the WebSocket job data in lots of ways
+	handleRecentData(data) {
+		const jobData = data.job_data;
+
+		// keys to be renamed
+		for (const [key_from, key_to] of Object.entries(recent_rename)) {
+			delete Object.assign(jobData, {[key_from]: jobData[key_to]})[key_to];
+		}
+
+		for (const key of recent_delete_null) {
+			if (key in jobData)
+				if (jobData[key] === null)
+					delete jobData[key];
+		}
+
+		for (const key of recent_delete_false) {
+			if (key in jobData)
+				if (jobData[key] === false)
+					delete jobData[key];
+		}
+
+		for (const key of recent_to_string) {
+			if (key in jobData)
+				jobData[key] = jobData[key].toString();
+		}
+
+		// some values missing/reduced in recent data, not calculable from recent data
+		// JobsTracker handleJobData handles that by copying the data back in history
+
+		this.handleData(data, true);
+	}
+
+	handleData(data, recent) {
 		this.messageCount += 1;
 		if (this.dumpTraffic && this.messageCount <= this.dumpMax) {
 			byId("traffic").appendChild(h("pre", null, prettyJson(data)));
 		}
-		this.jobsRenderer.handleData(data);
+		this.jobsRenderer.handleData(data, recent);
 	}
 
 	connectWebSocket() {
@@ -1534,43 +1789,56 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 	}
 
 	setFilter(value) {
+		this.previousFilter = byId("filter-box").value;
 		byId("filter-box").value = value;
 		byId("filter-box").onchange();
+		// Showing no jobs logs and no job headers can be confusing
+		// so show the headers when no job logs are selected.
+		if (value === "^$"){
+			if (!byId("show-all-headers").checked) {
+				byId("show-all-headers").dataset.auto = true;
+				this.showAllHeaders(true);
+			}
+		} else if (byId("show-all-headers").dataset.auto) {
+			delete byId("show-all-headers").dataset.auto;
+			this.showAllHeaders(false);
+		}
 	}
 
 	showAllHeaders(value) {
-		byId('show-all-headers').checked = value;
-		byId('hide-headers').sheet.disabled = value;
+		byId("show-all-headers").checked = value;
+		byId("hide-headers").sheet.disabled = value;
+		byId("job-type-aligned").sheet.disabled = !value;
 	}
 
 	showQueuedJobs(value) {
-		byId('show-queued-jobs').checked = value;
-		byId('hide-queued').sheet.disabled = value;
+		byId("show-queued-jobs").checked = value;
+		byId("hide-queued").sheet.disabled = value;
 	}
 
 	showRunningJobs(value) {
-		byId('show-running-jobs').checked = value;
-		byId('hide-running').sheet.disabled = value;
+		byId("show-running-jobs").checked = value;
+		byId("hide-running").sheet.disabled = value;
 	}
 
 	showFinishedJobs(value) {
-		byId('show-finished-jobs').checked = value;
-		byId('hide-done').sheet.disabled = value;
+		byId("show-finished-jobs").checked = value;
+		byId("hide-done").sheet.disabled = value;
 	}
 
 	showFailedJobs(value) {
-		byId('show-failed-jobs').checked = value;
-		byId('hide-failed').sheet.disabled = value;
+		byId("show-failed-jobs").checked = value;
+		byId("hide-failed").sheet.disabled = value;
 	}
 
 	showFatalJobs(value) {
-		byId('show-fatal-jobs').checked = value;
-		byId('hide-fatal').sheet.disabled = value;
+		byId("show-fatal-jobs").checked = value;
+		byId("hide-fatal").sheet.disabled = value;
 	}
 
 	showAbortedJobs(value) {
-		byId('show-aborted-jobs').checked = value;
-		byId('hide-aborted').sheet.disabled = value;
+		byId("show-aborted-jobs").checked = value;
+		byId("hide-aborted").sheet.disabled = value;
 	}
 }
 
