@@ -1278,6 +1278,9 @@ class Dashboard {
 			);
 			byId("filter-types").lastChild.after(h("br"));
 			byId("filter-types").lastChild.after("\n");
+			byId("crawls-finished").href += "?showNicks=1";
+			byId("alt").href += "?showNicks=1";
+			byId("beta").href += "?showNicks=1";
 		}
 
 		byId("filter-job-id").checked = filterJobID;

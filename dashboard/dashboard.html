@@ -469,9 +469,31 @@ kbd {
 <div class="padded-page">
 	<div class="header">
 		<div>
-			<a href="https://wiki.archiveteam.org/index.php?title=ArchiveBot" class="underlined-a">ArchiveBot</a>
-			tracking <span id="num-crawls">0</span> crawls.
-			See also <a href="pipelines" class="underlined-a">pipeline</a> or <a href="logs/recent" class="underlined-a">job</a> reports.
+			<details class="drop-down">
+			<summary title="Show menu for more ArchiveBot links"><a href="https://wiki.archiveteam.org/index.php/ArchiveBot" class="underlined-a">ArchiveBot</a></summary>
+			<a href="3" class="underlined-a" id="alt">Alt dash</a><br>
+			<a href="ircs://irc.hackint.org/#archivebot" class="underlined-a">Chat</a>
+			(<a href="https://chat.hackint.org/?join=%23archivebot" class="underlined-a">web</a>)<br>
+			<a href="pipelines" class="underlined-a">Pipelines</a><br>
+			(<a href="https://nulldata.foo/archivebot/pipejobcount.php" class="underlined-a">Details</a>)<br>
+			<a href="https://github.com/ArchiveTeam/ArchiveBot" class="underlined-a">Code</a><br>
+			</details>
+			<details class="drop-down">
+			<summary title="Show menu for other crawl information links"><span id="num-crawls">0</span> crawls</summary>
+			<a href="pending" class="underlined-a">Pending</a><br>
+			<a href="logs/recent" class="underlined-a">Monitor</a><br>
+			<a href="finished" class="underlined-a" id="crawls-finished">Finished</a><br>
+			<a href="https://archive.fart.website/archivebot/viewer/" class="underlined-a">Uploaded</a><br>
+			<a href="https://archive.org/details/archivebot" class="underlined-a">Data</a><br>
+			</details>
+			<details class="drop-down">
+			<summary title="Show menu for more documentation links"><a href="https://archivebot.readthedocs.io/" class="underlined-a">Docs</a></summary>
+			<a href="https://archivebot.readthedocs.io/en/latest/commands.html" class="underlined-a">Cmds</a><br>
+			<a href="https://github.com/ArchiveTeam/ArchiveBot/tree/master/db/ignore_patterns" class="underlined-a">Ignores</a><br>
+			(<a href="https://wiki.archiveteam.org/index.php/ArchiveBot/Ignore" class="underlined-a">Tips</a>)<br>
+			<a href="https://wiki.archiveteam.org/index.php/ArchiveBot#Usage_tips" class="underlined-a">Tricks</a><br>
+			<a href="https://wiki.archiveteam.org/index.php/ArchiveBot" class="underlined-a">Wiki</a><br>
+			</details>
 			<details class="drop-down">
 			<summary>Logs</summary>
 			<div id="filter-types">
@@ -616,7 +638,7 @@ kbd {
 			<p>
 				On GitHub at <a href="https://github.com/ArchiveTeam/ArchiveBot">ArchiveTeam/ArchiveBot</a>.
 
-				You can <a href="/beta">try the alternate dashboard (beta) here</a>.
+				You can <a href="/beta" id="beta">try the alternate dashboard (beta) here</a>.
 			</p>
 		</div>
 	</div>
