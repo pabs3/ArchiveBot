@@ -2097,7 +2097,7 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 			xhr.onerror = (ev) => {
 				reject(ev);
 			};
-			xhr.open("GET", `//archivebot.com/pipelines`);
+			xhr.open("GET", `http://ab2f.archivingyoursh.it/pipelines`);
 			xhr.setRequestHeader("Accept", "application/json");
 			xhr.send("");
 		});
