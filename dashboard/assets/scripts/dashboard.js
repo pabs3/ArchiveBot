@@ -2097,7 +2097,7 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 			xhr.onerror = (ev) => {
 				reject(ev);
 			};
-			xhr.open("GET", `//${this.host}${this.port}/pipelines`);
+			xhr.open("GET", `//archivebot.com/pipelines`);
 			xhr.setRequestHeader("Accept", "application/json");
 			xhr.send("");
 		});
@@ -2126,7 +2126,7 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 				const size_mb = Math.round((100 * ev.total) / 1e6) / 100;
 				byId("meta-info").textContent = `Recent data: ${percent}% (${size_mb}MB)`;
 			};
-			xhr.open("GET", `//${this.host}${this.port}/logs/recent?cb=${Date.now()}${Math.random()}`);
+			xhr.open("GET", `//archivebot.com/logs/recent?cb=${Date.now()}${Math.random()}`);
 			xhr.setRequestHeader("Accept", "application/json");
 			xhr.send("");
 		});
