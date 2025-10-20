@@ -2275,8 +2275,7 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 	}
 
 	async connectAB2f(ident, start, end) {
-/*		// const url = `https://ab2f.archivingyoursh.it/${ident}.jsonl`;
-		const url = `http://localhost:22667/${ident}.jsonl`;
+/*		const url = `https://ab2f.archivingyoursh.it/${ident}.jsonl`;
 		await fetch(url)
 		.then((res) => {
 			if (this.debug) console.debug("ab2f opened:", res.url);
@@ -2319,8 +2318,7 @@ ${String(kbPerSec).padStart(3, "0")} KB/s`;
 
 	async dumpAB2f(ident, start, end) {
 		byId("meta-info").textContent = `Requesting job data for ${ident}`;
-		//const url = `https://ab2f.archivingyoursh.it/${ident}.jsonl`;
-		const url = `http://localhost:22667/${ident}.jsonl`;
+		const url = `https://ab2f.archivingyoursh.it/${ident}.jsonl`;
 		await fetch(url)
 		.then((res) => {
 			if (this.debug) console.debug("ab2f opened:", res.url);
