@@ -950,7 +950,7 @@ class JobsRenderer {
 				info.ignores_errors.add([pattern, error]);
 			}
 
-			[url, error] = extractTextValues(line.textContent, lineERRORFetching);
+			[url, error] = extractTextValues(line, lineERRORFetching);
 			if (url) {
 				const link = h("a", { href: url, className: "log-url" }, url);
 				const parts = logSegment.lastChild.textContent.split(url);
