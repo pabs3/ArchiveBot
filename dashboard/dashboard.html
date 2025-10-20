@@ -104,6 +104,15 @@ html, body, .job-ident {
 	color: rgb(0 0 0 / 60%);
 }
 
+#backgroundColor {
+	margin: 0;
+	border: 0;
+	background: none;
+	padding: 0;
+	width: 1em;
+	height: 1em;
+}
+
 .job-header {
 	display: flex;
 	align-items: flex-end;
@@ -685,6 +694,7 @@ For example: 1s1f1|example\.org|proactive|expipe">
 				<li>To override the URL of the logs stream, add <kbd><span class="url-q-or-amp">?</span>websocketUrl=ws://localhost:4568/stream</kbd> to the dashboard URL.</li>
 				<li>To view the first two JSON messages of the logs stream, add <kbd><span class="url-q-or-amp">?</span>dumpMax=2</kbd> to the dashboard URL.</li>
 				<li>To enable debug messages in the browser console, add <kbd><span class="url-q-or-amp">?</span>debug=1</kbd> to the dashboard URL.</li>
+				<li>To change the background colour, add <kbd><span class="url-q-or-amp">&amp;</span>backgroundColor=red</kbd> to the dashboard URL or click here: <input type="color" id="backgroundColor"></li>
 			</ul>
 			<p>
 				To use ArchiveBot, drop by <a href="https://chat.hackint.org/?join=archivebot">#archivebot</a> on hackint. <a href="https://archivebot.readthedocs.io/en/latest/">Issue commands</a> by typing them into the channel. You will need channel operator (@) or voice (+) status to issue archiving jobs; just ask for help or leave a message with the website you want to archive.
