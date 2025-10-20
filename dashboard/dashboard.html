@@ -45,6 +45,12 @@ html, body, .job-ident {
 	background-color: #d4c7b8;
 }
 
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
 #filter-box {
 	background-color: #eee;
 	border: 1px solid #999;
@@ -104,6 +110,14 @@ html, body, .job-ident {
 	justify-content: space-between;
 	flex-flow: row nowrap;
 	cursor: default;
+}
+
+.job-history::details-content {
+	background: linear-gradient(
+		to bottom,
+		#d4c7b8,
+		rgb(150 75 0 / 7.5%) 60%
+	);
 }
 
 .job-history-summary {
@@ -235,10 +249,19 @@ html, body, .job-ident {
 
 .job-ignores {
 	font-weight: bold;
+	color: inherit;
 }
 
 .job-igoff {
 	font-weight: normal !important;
+}
+
+.job-ignores-error {
+  animation: blinker 1s linear infinite;
+}
+
+.job-pipeline {
+	color: inherit;
 }
 
 .job-ident {
@@ -253,6 +276,12 @@ html, body, .job-ident {
 	text-align: right;
 }
 
+.job-changes {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	background-color: rgb(255 255 255 / 40%);
+}
+
 .log-window {
 	background-color: #FFF7E1;
 	overflow-y: scroll;
@@ -265,6 +294,7 @@ html, body, .job-ident {
 	overscroll-behavior: contain;
 	contain: strict;
 	content-visibility: auto;
+	resize: vertical;
 }
 
 .log-window-hidden {
@@ -391,10 +421,12 @@ kbd {
 	display: none;
 	cursor: default;
 	z-index: 1;
+	font-family: system-ui, sans-serif;
+	font-size: 12px;
 }
 
 .context-menu-entry {
-	display: block;
+	display: inline;
 	white-space: nowrap;
 	overflow: hidden;
 	max-width: 960px;
@@ -402,8 +434,6 @@ kbd {
 	line-height: 26px;
 	padding-left: 26px;
 	padding-right: 26px;
-	font-family: system-ui, sans-serif;
-	font-size: 12px;
 	cursor: default;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
@@ -415,8 +445,8 @@ kbd {
 
 .context-menu-entry:hover {
 	text-decoration: none !important /* Don't underline 'Open link in new tab' */;
-	background-color: #4281F4;
-	color: #fff;
+	background-color: #4281F4 !important; /* Override highlighting current selection */
+	color: #fff !important;
 }
 
 #clipboard-scratchpad {
