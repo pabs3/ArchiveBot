@@ -285,6 +285,7 @@ class JobsTracker {
 		const ident = jobData.ident;
 		const alreadyKnown = ident in this.known;
 		let jobDataChanged = [];
+		let jobDataCopied = [];
 		if (!alreadyKnown) {
 			this.known[ident] = true;
 			this.sorted.push(jobData);
@@ -308,6 +309,7 @@ class JobsTracker {
 					if (key in jobData) {
 						console.debug(`Copy back ${ident} ${key} ${jobData[key]}`);
 						this.history[ident][0][key] = jobData[key];
+						jobDataCopied.push(key);
 					}
 				}
 				this.history[ident][0]._copied = true;
@@ -328,7 +330,7 @@ class JobsTracker {
 				this.history[ident].unshift(jobData);
 			}
 		}
-		return [!alreadyKnown, jobDataChanged];
+		return [!alreadyKnown, jobDataChanged, jobDataCopied];
 	}
 
 	markFinished(ident) {
@@ -808,7 +810,7 @@ class JobsRenderer {
 		return [jobHeader, statsElements, jobType, jobUrl, jobNote];
 	}
 
-	_addJobHistoryHeader(dataTs, jobData, changed) {
+	_addJobHistoryHeader(dataTs, jobData, changed, copied) {
 
 		const maybeAligned = (className) => {
 			let s = className;
@@ -821,7 +823,7 @@ class JobsRenderer {
 		// Create a normal job header for the history, modified below
 		const [jobHeader, statsElements, jobType, jobUrl, jobNote] = this._createJobHeader(jobData);
 		const info = new JobRenderInfo(null, null, statsElements, jobType, jobUrl, jobNote, null, null);
-		this.updateHeader(changed, info, jobData);
+		this.updateHeader(changed, copied, info, jobData);
 
 		// Clear the job type indicator if it hasn't changed
 		// other the job history is slightly harder to notice
@@ -1032,12 +1034,12 @@ class JobsRenderer {
 	handleData(data, recent) {
 		const jobData = data.job_data;
 		const ident = jobData.ident;
-		const [added, changed] = this.jobs.handleJobData(jobData, recent);
+		const [added, changed, copied] = this.jobs.handleJobData(jobData, recent);
 		this.numCrawls.textContent = this.jobs.countActive();
 		if (added) {
 			this._createLogContainer(jobData);
 		} else if (changed.length) {
-			this._addJobHistoryHeader(data.ts, this.jobs.history[ident][1], changed);
+			this._addJobHistoryHeader(data.ts, this.jobs.history[ident][1], changed, copied);
 		}
 
 		const info = this.renderInfo[ident];
@@ -1046,11 +1048,12 @@ class JobsRenderer {
 			return;
 		}
 
-		this.updateHeader(changed, info, jobData);
+		this.updateHeader(changed, copied, info, jobData);
 		this.updateLogs(ident, info, data);
 	}
 
-	updateHeader(changed, info, jobData) {
+	updateHeader(changed, copied, info, jobData) {
+		const update = changed.concat(copied);
 
 		// Update stats
 		info.statsElements.mb.textContent = numberWithCommas(
@@ -1071,17 +1074,17 @@ class JobsRenderer {
 			)} downloaded`;
 		}
 
-		if (changed.includes("concurrency")) {
+		if (update.includes("concurrency")) {
 			info.statsElements.connections.textContent = jobData.concurrency;
 		}
 
-		if (["delay_min", "delay_max"].some((i) => changed.includes(i))) {
+		if (["delay_min", "delay_max"].some((i) => update.includes(i))) {
 			info.statsElements.delay.textContent = this.jobDelayText(jobData);
 			info.statsElements.delay.dataset.min = jobData.delay_min;
 			info.statsElements.delay.dataset.max = jobData.delay_max;
 		}
 
-		if (changed.includes("suppress_ignore_reports")){
+		if (update.includes("suppress_ignore_reports")){
 			if (jobData.suppress_ignore_reports) {
 				info.statsElements.ignores.textContent = "igoff";
 				if (!info.statsElements.ignores.classList.contains("job-igoff")) {
@@ -1095,31 +1098,31 @@ class JobsRenderer {
 			}
 		}
 
-		if (["fetch_depth", "url_file"].some((i) => changed.includes(i))) {
+		if (["fetch_depth", "url_file"].some((i) => update.includes(i))) {
 			// Update job type in case a job is restarted in another way
 			// FIXME: also because the url_file is not present in /logs/recent
 			info.jobType.textContent = this.jobTypeText(jobData);
 		}
 
-		if (["queued_at", "started_at"].some((i) => changed.includes(i))) {
+		if (["queued_at", "started_at"].some((i) => update.includes(i))) {
 			// Update started info in case a job is restarted
 			const jobStarted = info.statsElements.jobInfo.querySelector(".job-started");
 			[jobStarted.textContent, jobStarted.title] = this.jobStartedInfo(jobData);
 		}
 
-		if (changed.includes("started_by")){
+		if (update.includes("started_by")){
 			// Update started by info in case a job is restarted
 			const jobNick = info.statsElements.jobInfo.querySelector(".job-nick");
 			[jobNick.textContent, jobNick.title] = this.jobNickInfo(jobData);
 		}
 
-		if (changed.includes("note")){
+		if (update.includes("note")){
 			// Update note
 			info.jobNote.textContent = this.jobNoteText(jobData);
 			this.jobNoteUrlTitle(jobData, info.jobUrl);
 		}
 
-		if (changed.includes("pipeline_id")){
+		if (update.includes("pipeline_id")){
 			// Update pipeline in case a job is restarted on another pipline
 			const jobPipeline = info.statsElements.pipeline;
 			[jobPipeline.textContent, jobPipeline.title] = this.jobPipelineInfo(jobData);
