@@ -306,6 +306,7 @@ class JobsTracker {
 			) {
 				for (const key of recent_copy_back) {
 					if (key in jobData) {
+						console.debug(`Copy back ${ident} ${key} ${jobData[key]}`);
 						this.history[ident][0][key] = jobData[key];
 					}
 				}
