@@ -291,6 +291,7 @@ class JobsTracker {
 			this.resort();
 			this.history[ident] = [jobData];
 			this.history[ident][0]._recent = recent;
+			this.history[ident][0]._copied = false;
 		} else {
 			// FIXME: update the backend instead
 			// /logs/recent job data has missing/reduced items
@@ -298,12 +299,17 @@ class JobsTracker {
 			// copy them back to the last recent data item
 			// since they were probably the same then
 			// despite not being transmitted then
-			if (!recent && this.history[ident][0]._recent) {
+			if (
+				!this.history[ident][0]._copied &&
+				!recent &&
+				this.history[ident][0]._recent
+			) {
 				for (const key of recent_copy_back) {
 					if (key in jobData) {
 						this.history[ident][0][key] = jobData[key];
 					}
 				}
+				this.history[ident][0]._copied = true;
 			}
 			for (const key of Object.keys(JobsTracker.#tracked)) {
 				if (jobData[key] !== this.history[ident][0][key]) {
