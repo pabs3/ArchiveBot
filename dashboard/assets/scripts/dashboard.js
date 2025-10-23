@@ -469,7 +469,7 @@ const lineSomeBytes = /^ *([1-9][0-9]*) bytes\.$/
 // because some of them are often missing (FIXME)
 const lineFinishedItem = /^Starting (RelabelIfAborted|CompressLogIfNoMetaWarc|StopHeartbeat|MarkItemAsDone) for Item *$|^Finished (WgetDownload|CompressLogIfNoMetaWarc|StopHeartbeat) for Item *$/;
 const lineReceivedItem = /^Received item ([0-9a-z]{23,})\.$/;
-const lineStartingItem = /^(?:Starting|Finished) (StartHeartbeat|SetFetchDepth|PreparePaths|WriteInfo) for Item *$/;
+const lineStartingItem = /^(?:Starting|Finished) (StartHeartbeat|SetFetchDepth|PreparePaths) for Item *$/;
 const lineDownloadItem = /^Starting (DownloadUrlFile|WgetDownload) for Item *$/
 const lineQueuedItem = /^Queued (.*) as item ([0-9a-z]{23,}) to (pending:.*)\.$/;
 
