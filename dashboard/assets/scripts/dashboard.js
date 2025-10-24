@@ -467,7 +467,7 @@ const lineZeroBytes = /^ *0 bytes\.$/;
 const lineSomeBytes = /^ *([1-9][0-9]*) bytes\.$/
 // Check for several completion messages
 // because some of them are often missing (FIXME)
-const lineFinishedItem = /^Starting (RelabelIfAborted|CompressLogIfNoMetaWarc|StopHeartbeat|MarkItemAsDone) for Item *$|^Finished (WgetDownload|CompressLogIfNoMetaWarc|StopHeartbeat) for Item *$/;
+const lineFinishedItem = /^Starting (RelabelIfAborted|CompressLogIfNoMetaWarc|MoveFiles|StopHeartbeat|MarkItemAsDone) for Item *$|^Finished (WgetDownload|CompressLogIfNoMetaWarc|MoveFiles|StopHeartbeat) for Item *$/;
 const lineReceivedItem = /^Received item ([0-9a-z]{23,})\.$/;
 const lineStartingItem = /^(?:Starting|Finished) (StartHeartbeat|SetFetchDepth|PreparePaths) for Item *$/;
 const lineDownloadItem = /^Starting (DownloadUrlFile|WgetDownload) for Item *$/
