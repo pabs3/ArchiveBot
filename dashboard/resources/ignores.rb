@@ -89,6 +89,6 @@ class Ignores < Webmachine::Resource
   private
 
   def keys
-    request.path_tokens.last.split(',')
+    request.path_tokens.last&.split(',')
   end
 end
