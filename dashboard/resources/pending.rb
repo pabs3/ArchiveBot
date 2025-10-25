@@ -5,6 +5,8 @@ class Pending < Webmachine::Resource
 
   def content_types_provided
     [
+      ['application/json', :to_json],
+      ['text/html', :to_html]
       ['text/plain', :to_text]
     ]
   end
@@ -39,5 +41,14 @@ class Pending < Webmachine::Resource
     end
 
     buffer.join("\n\n")
+  end
+
+  def to_json
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    get_pending_jobs.to_json
+  end
+
+  def to_html
+    File.read(File.expand_path('../../pending.html', __FILE__))
   end
 end
