@@ -1695,11 +1695,11 @@ class ContextMenuRenderer {
 		this.prepare();
 
 		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const info = ds.jobsRenderer.renderInfo[ident];
 		const igon = target.textContent === "igon" ? "igoff" : "igon";
 
 		this.makeCopyEntries(ident, [`!${igon} ${ident}`], {});
 
-		const info = ds.jobsRenderer.renderInfo[ident];
 		if ("ignores_errors" in info) {
 			const errors = info.ignores_errors;
 			const mapper = ([pattern, error]) => `!ug ${ident} ${pattern}`;
