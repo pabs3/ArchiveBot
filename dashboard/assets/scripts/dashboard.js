@@ -774,6 +774,11 @@ class JobsRenderer {
 						"span", {
 							className: `inline-stat ${maybeAligned("job-nick")}`,
 							title: nickTitle,
+							onclick: (ev) => {
+								ds.setFilter(ev.target.dataset.started_by);
+								ev.stopPropagation();
+								ev.preventDefault();
+							}
 						},
 						nickText,
 					),
@@ -797,6 +802,8 @@ class JobsRenderer {
 				],
 			),
 		]);
+
+		statsElements.jobInfo.querySelector(".job-nick").dataset.started_by = jobData.started_by;
 
 		if (this.showPipelines) {
 			appendAny(
