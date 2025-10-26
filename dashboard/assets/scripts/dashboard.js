@@ -474,7 +474,7 @@ const lineDownloadItem = /^Starting (DownloadUrlFile|WgetDownload) for Item *$/
 const lineQueuedItem = /^Queued (.*) as item ([0-9a-z]{23,}) to (pending:.*)\.$/;
 
 class JobsRenderer {
-	constructor(container, filterBox, historyLines, showNicks, contextMenuRenderer) {
+	constructor(container, filterBox, historyLines, showNicks, showPipelines, contextMenuRenderer) {
 		this.container = container;
 		this.filterBox = filterBox;
 		this.filterTimeout = null;
@@ -515,6 +515,7 @@ class JobsRenderer {
 		};
 		this.historyLines = historyLines;
 		this.showNicks = showNicks;
+		this.showPipelines = showPipelines;
 		this.contextMenuRenderer = contextMenuRenderer;
 		this.linesPerSegment = Math.max(1, Math.round(this.historyLines / 10));
 		this.jobs = new JobsTracker();
@@ -671,13 +672,17 @@ class JobsRenderer {
 	}
 
 	jobPipelineInfo(jobData) {
-		const pipelineId = jobData.pipeline_id;
-		const pipelineIdOnly = pipelineId.removePrefix("pipeline:");
-		const pipelineNick = this.pipelines[pipelineId];
-		return [
-			pipelineNick ?? pipelineIdOnly,
-			`pipeline ${pipelineNick ?? "unknown"} ${pipelineIdOnly}`,
-		]
+		if (this.showPipelines) {
+			const pipelineId = jobData.pipeline_id;
+			const pipelineIdOnly = pipelineId.removePrefix("pipeline:");
+			const pipelineNick = this.pipelines[pipelineId];
+			return [
+				pipelineNick ?? pipelineIdOnly,
+				`pipeline ${pipelineNick ?? "unknown"} ${pipelineIdOnly}`,
+			]
+		} else {
+			return ["", ""];
+		}
 	}
 
 	_createJobHeader (jobData) {
@@ -788,11 +793,20 @@ class JobsRenderer {
 					statsElements.delay,
 					"; ",
 					statsElements.ignores,
-					"; ",
-					statsElements.pipeline,
+
 				],
 			),
 		]);
+
+		if (this.showPipelines) {
+			appendAny(
+				statsElements.jobInfo.querySelector(".stats-elements"),
+				[
+					"; ",
+					statsElements.pipeline,
+				]
+			);
+		}
 
 		statsElements.jobInfo.querySelector(".job-connections-text").title = statsElements.connections.title;
 
@@ -1194,7 +1208,7 @@ class JobsRenderer {
 			(byId("filter-job-id").checked && query.test(job.ident)) ||
 			(byId("filter-job-url").checked && query.test(job.url)) ||
 			(byId("filter-job-note").checked && query.test(job.note)) ||
-			(byId("filter-job-pipeline").checked && (query.test(job.pipeline_id) || query.test(this.pipelines[job.pipeline_id]))) ||
+			(this.showPipelines && byId("filter-job-pipeline").checked && (query.test(job.pipeline_id) || query.test(this.pipelines[job.pipeline_id]))) ||
 			(this.showNicks && byId("filter-job-nick").checked && query.test(job.started_by));
 			if (!show) {
 				w.classList.add("log-window-hidden");
@@ -1890,6 +1904,7 @@ class Dashboard {
 		const batchTimeWhenHidden = args.batchTimeWhenHidden ? Number(args.batchTimeWhenHidden) : 1000;
 		const batchMaxItems = args.batchMaxItems ? Number(args.batchMaxItems) : 250;
 		const showNicks = args.showNicks ? Boolean(Number(args.showNicks)) : false;
+		const showPipelines = args.showPipelines ? Boolean(Number(args.showPipelines)) : false;
 		const contextMenu = args.contextMenu ? Boolean(Number(args.contextMenu)) : true;
 		this.initialFilter = args.replayJob ? "" : args.initialFilter ?? "^$";
 		this.previousFilter = this.initialFilter;
@@ -1946,6 +1961,7 @@ class Dashboard {
 			byId("filter-box"),
 			historyLines,
 			showNicks,
+			showPipelines,
 			this.contextMenuRenderer,
 		);
 
@@ -1981,18 +1997,40 @@ class Dashboard {
 					" Nick",
 				])
 			);
+			byId("filter-types").lastChild.after(h("br"));
 			byId("filter-box").title += "|exnick";
 			byId("crawls-finished").setSearchParam("showNicks", "1");
 			byId("alt").setSearchParam("showNicks", "1");
 			byId("beta").setSearchParam("showNicks", "1");
 		}
 
+		if (!showPipelines) {
+			addPageStyles(".job-pipeline-aligned { width: 0; }");
+		} else {
+			byId("filter-types").lastChild.after(
+				h("label", { title: "Pipeline" }, [
+					h("input", {
+						type: "checkbox",
+						id: "filter-job-pipeline",
+						accessKey: "p",
+						onclick: () => { ds.jobsRenderer.applyFilter(); },
+						checked: true,
+					}),
+					" Pipe",
+				])
+			);
+			byId("filter-types").lastChild.after(h("br"));
+			byId("filter-box").title += "|expipe";
+		}
+
 		byId("filter-job-id").checked = filterJobID;
 		byId("filter-job-url").checked = filterJobURL;
 		byId("filter-job-note").checked = filterJobNote;
-		byId("filter-job-pipeline").checked = filterJobPipe;
 		if (showNicks) {
 			byId("filter-job-nick").checked = filterJobNick;
+		}
+		if (showPipelines) {
+			byId("filter-job-pipeline").checked = filterJobPipe;
 		}
 
 		if (args.initialFilter != null) {
