@@ -1494,8 +1494,8 @@ class ContextMenuRenderer {
 		appendAny(this.element, "Copy !con … ");
 		this.makeCopyEntries(ident, [
 			["1", `!con ${ident} 1`],
-			["3", `!con ${ident} 3`],
 			["2", `!con ${ident} 2`],
+			["3", `!con ${ident} 3`],
 			["6", `!con ${ident} 6`],
 			["12", `!con ${ident} 12`], //FIXME: disable this?
 		], { prefix: "", after: " "});
@@ -1506,10 +1506,10 @@ class ContextMenuRenderer {
 		// FIXME: add/highlight current
 		appendAny(this.element, "Copy !d … ");
 		this.makeCopyEntries(ident, [
-			["3min", `!d ${ident} 180000 180000`],
-			["250-375 ms", `!d ${ident} 250 375`],
-			["1hr", `!d ${ident} 3600000 3600000`],
 			["zero", `!d ${ident} 0 0`], // FIXME: disable this?
+			["250-375 ms", `!d ${ident} 250 375`],
+			["3min", `!d ${ident} 180000 180000`],
+			["1hr", `!d ${ident} 3600000 3600000`],
 		], { prefix: "", after: " "});
 		appendAny(this.element, h("br"));
 	}
