@@ -1713,6 +1713,24 @@ class ContextMenuRenderer {
 		this.show(ev);
 	}
 
+	jobPipelineMenu(ev, target) {
+		this.prepare();
+
+		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const jr = ds.jobsRenderer;
+		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
+
+		const pipelineId = jobData.pipeline_id;
+		const pipelineNick = jr.pipelines[pipelineId];
+
+		this.makeEntry(h("span", { onclick: () => { ds.setFilter(pipelineNick) }; }, `Filter by ${pipelineNick}`));
+		appendAny(this.element, h("br"));
+		this.makeEntry(h("span", { onclick: () => { ds.setFilter(pipelineId) }; }, `Filter by ${pipelineId}`));
+		appendAny(this.element, h("br"));
+
+		this.show(ev);
+	}
+
 	onContextMenu(ev) {
 		if (ev.target.classList.contains("job-type")) {
 			this.jobCommandMenu(ev, ev.target);
@@ -1726,6 +1744,8 @@ class ContextMenuRenderer {
 			this.jobDelayMenu(ev, ev.target);
 		} else if (ev.target.classList.contains("job-ignores")) {
 			this.jobIgnoresMenu(ev, ev.target);
+		} else if (ev.target.classList.contains("job-pipeline")) {
+			this.jobPipelineMenu(ev, ev.target);
 		} else if (ContextMenuRenderer.#log_classes.filter(c => ev.target.classList.contains(c)).length) {
 			this.logWindowMenu(ev, ev.target);
 		} else {
