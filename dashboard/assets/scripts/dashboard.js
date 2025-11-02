@@ -774,11 +774,6 @@ class JobsRenderer {
 						"span", {
 							className: `inline-stat ${maybeAligned("job-nick")}`,
 							title: nickTitle,
-							onclick: (ev) => {
-								ds.setFilter(ev.target.dataset.started_by);
-								ev.stopPropagation();
-								ev.preventDefault();
-							}
 						},
 						nickText,
 					),
@@ -1651,6 +1646,55 @@ class ContextMenuRenderer {
 		this.show(ev);
 	}
 
+	jobUrlMenu(ev, target) {
+		this.prepare();
+
+		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const jr = ds.jobsRenderer;
+		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
+
+		const jobUrl = jobData.url
+		const jobNote = jobData.note;
+
+		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(jobUrl)) } }, `Filter by ${jobUrl}`));
+		appendAny(this.element, h("br"));
+		if (jobNote) {
+			this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(jobNote)) } }, `Filter by ${jobNote}`));
+			appendAny(this.element, h("br"));
+		}
+
+		this.show(ev);
+	}
+
+	jobNickMenu(ev, target) {
+		this.prepare();
+
+		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const jr = ds.jobsRenderer;
+		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
+
+		const ircNick = jobData.started_by;
+
+		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(ircNick)) } }, `Filter by ${ircNick}`));
+
+		this.show(ev);
+	}
+
+	jobNoteMenu(ev, target) {
+
+		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const jr = ds.jobsRenderer;
+		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
+
+		const jobNote = jobData.note;
+
+		if (jobNote) {
+			this.prepare();
+			this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(jobNote)) } }, `Filter by ${jobNote}`));
+			this.show(ev);
+		}
+	}
+
 	jobConcurrencyMenu(ev, target) {
 		this.prepare();
 
@@ -1723,9 +1767,9 @@ class ContextMenuRenderer {
 		const pipelineId = jobData.pipeline_id;
 		const pipelineNick = jr.pipelines[pipelineId];
 
-		this.makeEntry(h("span", { onclick: () => { ds.setFilter(pipelineNick) }; }, `Filter by ${pipelineNick}`));
+		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(pipelineNick)) } }, `Filter by ${pipelineNick}`));
 		appendAny(this.element, h("br"));
-		this.makeEntry(h("span", { onclick: () => { ds.setFilter(pipelineId) }; }, `Filter by ${pipelineId}`));
+		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(pipelineId)) } }, `Filter by ${pipelineId}`));
 		appendAny(this.element, h("br"));
 
 		this.show(ev);
@@ -1734,8 +1778,14 @@ class ContextMenuRenderer {
 	onContextMenu(ev) {
 		if (ev.target.classList.contains("job-type")) {
 			this.jobCommandMenu(ev, ev.target);
+		} else if (ev.target.classList.contains("job-url")) {
+			this.jobUrlMenu(ev, ev.target);
 		} else if (ev.target.classList.contains("job-options")) {
 			this.jobCommandMenu(ev, ev.target);
+		} else if (ev.target.classList.contains("job-nick")) {
+			this.jobNickMenu(ev, ev.target);
+		} else if (ev.target.classList.contains("job-note")) {
+			this.jobNoteMenu(ev, ev.target);
 		} else if (ev.target.classList.contains("job-connections")) {
 			this.jobConcurrencyMenu(ev, ev.target);
 		} else if (ev.target.classList.contains("job-connections-text")) {
