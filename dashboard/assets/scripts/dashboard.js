@@ -156,6 +156,32 @@ function extractTextValues(text, regex) {
 	return match === null ? []: match.slice(1);
 }
 
+
+function replaceFnArgs(args) {
+	const namedGroups = typeof args.at(-1) === "object" ? args.pop() : undefined;
+	const string = args.pop();
+	const offset = args.pop();
+	const groups = [...args];
+	return [groups, offset, string, namedGroups];
+}
+
+const regExpGenericiseRe = /(?<sha1>[0-9a-fA-F]{40})|(?<hex>0[xX][0-9a-fA-F]*[a-fA-F]+[0-9a-fA-F]+)|(?<digits>\d+)/g;
+
+function regExpGenericiser(match, ...args) {
+	const [groups, offset, string, namedGroups] = replaceFnArgs(args);
+	if (namedGroups === undefined) {
+		return match;
+	} else if (namedGroups["sha1"] !== undefined) {
+		return `[a-fA-F0-9]{40}`;
+	} else if (namedGroups["hex"] !== undefined) {
+		return `0[xX][a-fA-F0-9]{${match.length}}`;
+	} else if (namedGroups["digits"] !== undefined) {
+		return `\\d{${match.length}}`;
+	} else {
+		return match;
+	}
+}
+
 function scrollToBottom(elem) {
 	// Scroll to the bottom. To avoid serious performance problems in Firefox,
 	// use a big number instead of elem.scrollHeight.
@@ -1401,6 +1427,7 @@ class ContextMenuRenderer {
 		}
 		return commands;
 	}
+
 	getPathIgnoreCommands(ident, url, maxSuggestedIgnores) {
 		// For testing a URL with enough path segments to cause [N more ignore suggestions]
 		// url = "https://example.com/asset/620787/liveblog/api/cms/modules/cms/modules/cms/modules/cms/modules/cms/modules/cms/modules/";
@@ -1413,14 +1440,28 @@ class ContextMenuRenderer {
 
 		let menuVariants = [];
 		if (query) {
+			const queryGeneral = regExpEscape(query).replace(regExpGenericiseRe, regExpGenericiser);
+			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/[^?]*\\?${queryGeneral}$`);
+			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?")}${queryGeneral}$`);
 			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?" + query)}$`);
+		} else {
+			const pathSplit = path.split("/");
+			if (pathSplit.at(-1) === "") {
+				pathSplit.splice(-2, 2, `${pathSplit.at(-2)}/`);
+			}
+			const pathGeneral = regExpEscape(path).replace(regExpGenericiseRe, regExpGenericiser);
+			const pathLastGeneral = regExpEscape(pathSplit.at(-1)).replace(regExpGenericiseRe, regExpGenericiser);
+			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/.*/${pathLastGeneral}$`);
+			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/.*/${regExpEscape(pathSplit.at(-1))}$`);
+			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}${pathGeneral}$`);
+			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path)}$`);
 		}
 		menuVariants.push(...pathVariants.map((p) => {
 			return `!ig ${ident} ^${reSchema}://${regExpEscape(domain + p)}`;
 		}));
-		if (!query) {
-			menuVariants[0] += "$";
-		}
+
+		// Remove duplicates in an order-preserving way
+		menuVariants = Array.from(new Map(menuVariants.map((i) => [i, 1])).keys());
 
 		let somePathVariants = pathVariants.slice(-maxSuggestedIgnores);
 		let ignoresRemaining = pathVariants.length - somePathVariants.length;
@@ -1563,7 +1604,7 @@ class ContextMenuRenderer {
 				),
 			);
 		}
-		this.makeCopyEntries(ident, ignorePathCommands, {});
+		this.makeCopyEntries(ident, ignorePathCommands, {after: null});
 		this.makePathStatusCommands(url);
 	}
 
