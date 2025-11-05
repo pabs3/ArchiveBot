@@ -1375,6 +1375,7 @@ class ContextMenuRenderer {
 		"line-error",
 		"line-warning",
 		"line-redirect",
+		"line-retry",
 		"line-ignore",
 		"line-stdout",
 		// Parts of line-ignore
@@ -1391,6 +1392,7 @@ class ContextMenuRenderer {
 		"error",
 		"warning",
 		"redirect",
+		"retry",
 	];
 
 	constructor() {
