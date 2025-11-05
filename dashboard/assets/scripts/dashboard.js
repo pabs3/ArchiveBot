@@ -995,6 +995,7 @@ class JobsRenderer {
 			let ignores, pattern, url, error;
 
 			[, ignores, , ] = extractTextValues(line, lineSettingsUpdated);
+			info.statsElements.ignores.title = `${ignores} ignore regexes`;
 
 			[pattern, error] = extractTextValues(line, lineInvalidPattern);
 			if (pattern && error){
