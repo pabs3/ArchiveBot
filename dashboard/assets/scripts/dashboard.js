@@ -404,6 +404,7 @@ const Reusable = {
 	obj_className_line_error: { className: "line-error" },
 	obj_className_line_warning: { className: "line-warning" },
 	obj_className_line_redirect: { className: "line-redirect" },
+	obj_className_line_retry: { className: "line-retry" },
 	//
 	obj_className_line_ignore: { className: "line-ignore" },
 	obj_className_line_stdout: { className: "line-stdout" },
@@ -922,12 +923,14 @@ class JobsRenderer {
 
 	_renderDownloadLine(data, logSegment) {
 		let attrs;
-		if (data.is_warning) {
+		if (data.is_warning && [401, 403, 404, 405, 410].includes(data.response_code)) {
 			attrs = Reusable.obj_className_line_warning;
 		} else if (data.is_error) {
 			attrs = Reusable.obj_className_line_error;
 		} else if (data.response_code && data.response_code >= 300 && data.response_code < 400) {
 			attrs = Reusable.obj_className_line_redirect;
+		} else if (data.response_code && ![200, 204, 304].includes(data.response_code)) {
+			attrs = Reusable.obj_className_line_retry;
 		} else {
 			attrs = Reusable.obj_className_line_normal;
 		}
