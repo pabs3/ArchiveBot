@@ -103,16 +103,20 @@ function prettyJson(obj) {
 	return JSON.stringify(obj, undefined, 2);
 }
 
-function matchParentElement(elem, skip, attr, regex) {
-		while (elem !== document && elem !== null) {
-			if (skip-- <= 0 && elem.hasAttribute(attr)) {
-				const match = regex.exec(elem.getAttribute(attr));
-				if (match !== null) return [elem, ...match.slice(1)];
-			}
-			elem = elem.parentElement;
-		};
+function getParentByPrefix(elem, attr, prefix) {
+	const parent = elem.closest(`[${attr}^="${prefix}"]`);
+	if (parent) {
+		const prop = attr === "class" ? "classList" : attr;
+		const value = parent[prop];
+		if (value instanceof DOMTokenList) {
+			return [parent, Array.from(value).map((v) => v.removePrefix(prefix))]
+		} else {
+			return [parent, value.removePrefix(prefix)];
+		}
+	} else {
 		return [null, null];
 	}
+}
 
 // Copied from Coreweb/js_coreweb/cw/string.js
 /**
@@ -404,7 +408,6 @@ const Reusable = {
 	obj_className_line_error: { className: "line-error" },
 	obj_className_line_warning: { className: "line-warning" },
 	obj_className_line_redirect: { className: "line-redirect" },
-	obj_className_line_retry: { className: "line-retry" },
 	//
 	obj_className_line_ignore: { className: "line-ignore" },
 	obj_className_line_stdout: { className: "line-stdout" },
@@ -478,8 +481,6 @@ class JobStatus {
 
 const EOL = /[\r\n]+$/;
 
-const logContainerIdent = /^log-container-(.*)/;
-const logWindowIdent = /^log-window-(.*)/;
 const logLineType = /^line-(.*)/;
 
 const filterGetDomain = /^\(\?-i\:\^https?\:\/\/([^\/:]+)\/.*\$\)$/;
@@ -499,6 +500,8 @@ const lineReceivedItem = /^Received item ([0-9a-z]{23,})\.$/;
 const lineStartingItem = /^(?:Starting|Finished) (StartHeartbeat|SetFetchDepth|PreparePaths) for Item *$/;
 const lineDownloadItem = /^Starting (DownloadUrlFile|WgetDownload) for Item *$/
 const lineQueuedItem = /^Queued (.*) as item ([0-9a-z]{23,}) to (pending:.*)\.$/;
+
+const wgetCodesRetried = /^(?:Connect|Readline) timed out\.$|^Connection closed\.|^\[Errno 1\] Operation not permitted|^DNS resolution error: All nameservers failed to answer the query .*\. IN (?:A|AAAA): Server 127\.0\.0\.1 UDP port 53 answered SERVFAIL$|^Invalid redirect location\.$|^Connect network error: $|^\[Errno 104\] Connection reset by peer$/;
 
 class JobsRenderer {
 	constructor(container, filterBox, historyLines, showNicks, showPipelines, contextMenuRenderer) {
@@ -923,16 +926,27 @@ class JobsRenderer {
 
 	_renderDownloadLine(data, logSegment) {
 		let attrs;
-		if (data.is_warning && [401, 403, 404, 405, 410].includes(data.response_code)) {
+		if (data.is_warning) {
 			attrs = Reusable.obj_className_line_warning;
 		} else if (data.is_error) {
 			attrs = Reusable.obj_className_line_error;
 		} else if (data.response_code && data.response_code >= 300 && data.response_code < 400) {
 			attrs = Reusable.obj_className_line_redirect;
-		} else if (data.response_code && ![200, 204, 304].includes(data.response_code)) {
-			attrs = Reusable.obj_className_line_retry;
 		} else {
 			attrs = Reusable.obj_className_line_normal;
+		}
+
+		if (
+			data.response_code != null && (
+				(data.response_code === 0 && wgetCodesRetried.test(data.wget_code)) ||
+				(
+					data.response_code > 0 &&
+					(data.response_code < 300 || data.response_code >= 400) &&
+					![200, 204, 206, 304, 401, 403, 404, 405, 410].includes(data.response_code)
+				)
+			)
+		) {
+			attrs = { className: `${attrs.className} line-retry` };
 		}
 
 		const url = data.url;
@@ -942,8 +956,10 @@ class JobsRenderer {
 			h("div", attrs, [`${data.response_code} ${data.wget_code} `, h("a", { href: url, className: "log-url" }, url)]),
 		);
 
+		const types = Array.from(logSegment.lastChild.classList).map((c) => c.removePrefix("line-"));
+
 		logSegment.lastChild.title = new Date(data.ts * 1000).toISOString();
-		logSegment.lastChild.title += "\nline: download, " + logSegment.lastChild.className.removePrefix("line-");
+		logSegment.lastChild.title += "\nline: download, " + types.join(", ");
 
 		return 1;
 	}
@@ -995,7 +1011,8 @@ class JobsRenderer {
 			let ignores, pattern, url, error;
 
 			[, ignores, , ] = extractTextValues(line, lineSettingsUpdated);
-			info.statsElements.ignores.title = `${ignores} ignore regexes`;
+			if (ignores)
+				info.statsElements.ignores.title = `${ignores} ignore regexes`;
 
 			[pattern, error] = extractTextValues(line, lineInvalidPattern);
 			if (pattern && error){
@@ -1383,7 +1400,7 @@ class ContextMenuRenderer {
 		"ignore-url",
 		"bold",
 		"ignore-pattern",
-		// Part of line-{normal,error,warning,redirect}
+		// Part of line-{normal,error,warning,redirect,retry}
 		"log-url",
 	];
 
@@ -1630,19 +1647,19 @@ class ContextMenuRenderer {
 		// create the correct ignore pattern.
 
 		const maxSuggestedIgnores = 8;
-		const [logWindow, ident] = matchParentElement(target, 0, "id", logWindowIdent);
+		const [logWindow, ident] = this.getLogWindow(target);
 		const igon = logWindow.parentElement.getElementsByClassName("job-ignores")[0].textContent === "igon" ? "igoff" : "igon";
 		let url, pattern, con, min, max;
 
-		const [line, type] = matchParentElement(target, 0, "class", logLineType);
-		if (type === "ignore") {
+		const [line, types] = getParentByPrefix(target, "class", "line-");
+		if (types.includes("ignore")) {
 			url = line.getElementsByClassName("ignore-url")[0].textContent;
 			pattern = line.getElementsByClassName("ignore-pattern")[0].textContent;
-		} else if (type === "stdout") {
+		} else if (types.includes("stdout")) {
 			[url, ] = extractTextValues(line.textContent, lineERRORFetching);
 			[pattern, ] = extractTextValues(line.textContent, lineInvalidPattern);
 			[con, , min, max] = extractTextValues(line.textContent, lineSettingsUpdated);
-		} else if (ContextMenuRenderer.#line_log_url_types.includes(type)) {
+		} else if (ContextMenuRenderer.#line_log_url_types.some(type => types.includes(type))) {
 			url = line.getElementsByClassName("log-url")[0].textContent;
 		}
 
@@ -1669,7 +1686,7 @@ class ContextMenuRenderer {
 	jobCommandMenu(ev, target) {
 		this.prepare();
 
-		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const [logContainer, ident] = this.getLogContainer(target);
 		const jr = ds.jobsRenderer;
 		const info = jr.renderInfo[ident];
 		const stats = info.statsElements;
@@ -1696,7 +1713,7 @@ class ContextMenuRenderer {
 	jobUrlMenu(ev, target) {
 		this.prepare();
 
-		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const [logContainer, ident] = this.getLogContainer(target);
 		const jr = ds.jobsRenderer;
 		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
 
@@ -1716,7 +1733,7 @@ class ContextMenuRenderer {
 	jobNickMenu(ev, target) {
 		this.prepare();
 
-		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const [logContainer, ident] = this.getLogContainer(target);
 		const jr = ds.jobsRenderer;
 		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
 
@@ -1729,7 +1746,7 @@ class ContextMenuRenderer {
 
 	jobNoteMenu(ev, target) {
 
-		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const [logContainer, ident] = this.getLogContainer(target);
 		const jr = ds.jobsRenderer;
 		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
 
@@ -1745,7 +1762,7 @@ class ContextMenuRenderer {
 	jobConcurrencyMenu(ev, target) {
 		this.prepare();
 
-		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const [logContainer, ident] = this.getLogContainer(target);
 		const elems = Array.from(logContainer.firstChild.getElementsByClassName("job-connections"));
 		const cons = Array.from(elems, (c) => c.textContent);
 		const cmds = cons.map((con) => `!con ${ident} ${con}`);
@@ -1765,7 +1782,7 @@ class ContextMenuRenderer {
 	jobDelayMenu(ev, target) {
 		this.prepare();
 
-		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const [logContainer, ident] = this.getLogContainer(target);
 		const elems = Array.from(logContainer.firstChild.getElementsByClassName("job-delay"));
 		const delays = Array.from(elems, (d) => [d.dataset.min, d.dataset.max]);
 		const cmds = delays.map(([min, max]) => this.delayInfo(ident, min, max));
@@ -1785,7 +1802,7 @@ class ContextMenuRenderer {
 	jobIgnoresMenu(ev, target) {
 		this.prepare();
 
-		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const [logContainer, ident] = this.getLogContainer(target);
 		const info = ds.jobsRenderer.renderInfo[ident];
 		const igon = target.textContent === "igon" ? "igoff" : "igon";
 
@@ -1807,7 +1824,7 @@ class ContextMenuRenderer {
 	jobPipelineMenu(ev, target) {
 		this.prepare();
 
-		const [logContainer, ident] = matchParentElement(target, 5, "id", logContainerIdent);
+		const [logContainer, ident] = this.getLogContainer(target);
 		const jr = ds.jobsRenderer;
 		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
 
@@ -1887,6 +1904,15 @@ class ContextMenuRenderer {
 	callAfterBlur(fn) {
 		this.callAfterBlurFns.push(fn);
 	}
+
+	getLogContainer(target) {
+		return getParentByPrefix(target, "id", "log-container-");
+	}
+
+	getLogWindow(target) {
+		return getParentByPrefix(target, "id", "log-window-");
+	}
+
 }
 
 class BatchingQueue {
