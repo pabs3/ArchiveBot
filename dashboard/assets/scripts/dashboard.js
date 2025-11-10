@@ -1531,12 +1531,14 @@ class ContextMenuRenderer {
 	}
 
 	replaceIdent(str, ident) {
+		if (!ident) return str;
+		const start = ident.substring(0, 3);
 		const _ident = ` ${ident}`;
 		const _ident_ = `${_ident} `;
 		if (str.endsWith(_ident))
-			return str.slice(0, -_ident.length) + " …";
+			return str.slice(0, -_ident.length) + ` ${start}…`;
 		else
-			return str.replace(_ident_, " … ");
+			return str.replace(_ident_, ` ${start}… `);
 	}
 
 	makeCopyEntries(ident, commands, {prefix="Copy ", after=null}) {
@@ -1556,8 +1558,9 @@ class ContextMenuRenderer {
 	}
 
 	makeAlwaysConcurrencyEntries(ident) {
+		const start = ident.substring(0, 3);
 		// FIXME: add/highlight current
-		appendAny(this.element, "Copy !con … ");
+		appendAny(this.element, `Copy !con ${start}… `);
 		this.makeCopyEntries(ident, [
 			["1", `!con ${ident} 1`],
 			["2", `!con ${ident} 2`],
@@ -1569,11 +1572,17 @@ class ContextMenuRenderer {
 	}
 
 	makeAlwaysDelayEntries(ident) {
+		const start = ident.substring(0, 3);
 		// FIXME: add/highlight current
-		appendAny(this.element, "Copy !d … ");
+		appendAny(this.element, `Copy !d ${start}… `);
 		this.makeCopyEntries(ident, [
-			["zero", `!d ${ident} 0 0`], // FIXME: disable this?
+			["0", `!d ${ident} 0 0`], // FIXME: disable this?
 			["250-375 ms", `!d ${ident} 250 375`],
+			["0.5s", `!d ${ident} 500 500`],
+			["1s", `!d ${ident} 1000 1000`],
+			["2s", `!d ${ident} 2000 2000`],
+			["5s", `!d ${ident} 5000 5000`],
+			["1min", `!d ${ident} 60000 60000`],
 			["3min", `!d ${ident} 180000 180000`],
 			["1hr", `!d ${ident} 3600000 3600000`],
 		], { prefix: "", after: " "});
@@ -1581,6 +1590,7 @@ class ContextMenuRenderer {
 	}
 
 	makeAlwaysEntries(ident, igon) {
+		const start = ident.substring(0, 3);
 		// FIXME: make these dependent on the job status
 		this.makeCopyEntries(ident, [
 			`!${igon} ${ident}`,
@@ -1593,7 +1603,7 @@ class ContextMenuRenderer {
 			["!whereis", `!whereis ${ident}`],
 			["!expire", `!expire ${ident}`],
 		], { prefix: "", after: " "});
-		appendAny(this.element, " …");
+		appendAny(this.element, ` ${start}…`);
 		appendAny(this.element, h("br"));
 		appendAny(this.element, "Copy ");
 		this.makeCopyEntries(ident, [
@@ -1601,7 +1611,7 @@ class ContextMenuRenderer {
 			["!explain", `!explain ${ident} `],
 			["!yahoo", `!yahoo ${ident}`], // FIXME: disable this?
 		], { prefix: "", after: " "});
-		appendAny(this.element, " …");
+		appendAny(this.element, ` ${start}…`);
 	}
 
 	makeUrlPathEntries(ident, url, igon, maxSuggestedIgnores) {
