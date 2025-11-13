@@ -1565,8 +1565,12 @@ class ContextMenuRenderer {
 			["1", `!con ${ident} 1`],
 			["2", `!con ${ident} 2`],
 			["3", `!con ${ident} 3`],
+			["4", `!con ${ident} 4`],
+			["5", `!con ${ident} 5`],
 			["6", `!con ${ident} 6`],
+			["9", `!con ${ident} 9`], //FIXME: disable this?
 			["12", `!con ${ident} 12`], //FIXME: disable this?
+			["24", `!con ${ident} 24`], //FIXME: disable this?
 		], { prefix: "", after: " "});
 		appendAny(this.element, h("br"));
 	}
