@@ -1686,6 +1686,7 @@ class ContextMenuRenderer {
 		}
 
 		if (pattern) {
+			// FIXME: show any igsets this pattern is from
 			this.makeCopyEntries(ident, [`!ug ${ident} ${pattern}`], {});
 		}
 		if (url) {
