@@ -845,7 +845,7 @@ class JobsRenderer {
 		const jobUrl = statsElements.jobInfo.querySelector(".job-url");
 		jobUrl.dataset.url = jobUrl.textContent;
 		jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.archivete.am/").removePrefix("inline/");
-		if (jobUrl.href !== jobUrl.textContent) {
+		if (jobUrl.dataset.url !== jobUrl.textContent) {
 			jobUrl.href = "https://transfer.archivete.am/inline/" + jobUrl.textContent;
 			jobUrl.textContent = jobUrl.textContent.split("/", 2)[1];
 		}
