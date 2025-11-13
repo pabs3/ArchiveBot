@@ -1732,7 +1732,7 @@ class ContextMenuRenderer {
 		const jr = ds.jobsRenderer;
 		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
 
-		const jobUrl = jobData.url
+		const jobUrl = jobData.url;
 		const jobNote = jobData.note;
 
 		this.makeEntry(h("span", { onclick: this.makeCopyTextFn(jobUrl) }, "Copy link address"));
