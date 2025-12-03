@@ -1603,7 +1603,7 @@ class ContextMenuRenderer {
 		appendAny(this.element, h("br"));
 	}
 
-	makeAlwaysEntries(ident, igon) {
+	makeAlwaysEntries(ident, igon, note) {
 		const start = ident.substring(0, 3);
 		// FIXME: make these dependent on the job status
 		this.makeCopyEntries(ident, [
@@ -1622,7 +1622,7 @@ class ContextMenuRenderer {
 		appendAny(this.element, "Copy ");
 		this.makeCopyEntries(ident, [
 			["!abort", `!abort ${ident}`],
-			["!explain", `!explain ${ident} `],
+			["!explain", `!explain ${ident} ${note}`],
 			["!yahoo", `!yahoo ${ident}`], // FIXME: disable this?
 		], { prefix: "", after: " "});
 		appendAny(this.element, ` ${start}…`);
@@ -1672,7 +1672,11 @@ class ContextMenuRenderer {
 
 		const maxSuggestedIgnores = 8;
 		const [logWindow, ident] = this.getLogWindow(target);
-		const igon = logWindow.parentElement.getElementsByClassName("job-ignores")[0].textContent === "igon" ? "igoff" : "igon";
+		const jr = ds.jobsRenderer;
+		const info = jr.renderInfo[ident];
+		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
+		const igon = jobData.suppress_ignore_reports ? "igoff" : "igon";
+		const note = jobData.note ?? "";
 		let url, pattern, con, min, max;
 
 		const [line, types] = getParentByPrefix(target, "class", "line-");
@@ -1703,7 +1707,7 @@ class ContextMenuRenderer {
 			this.makeUrlPathEntries(ident, url, igon, maxSuggestedIgnores);
 		}
 
-		this.makeAlwaysEntries(ident, igon);
+		this.makeAlwaysEntries(ident, igon, note);
 
 		this.show(ev);
 	}
