@@ -538,28 +538,34 @@ kbd {
 		<div>
 			<details class="drop-down">
 			<summary title="Show menu for more ArchiveBot links"><a href="https://wiki.archiveteam.org/index.php/ArchiveBot" class="underlined-a">ArchiveBot</a></summary>
+			<div id="archivebot-menu">
 			<a href="http://archivebot.com/3" class="underlined-a" id="alt" title="Alternative dashboard (beta)">Alt dash</a><br>
 			<a href="https://chat.hackint.org/?join=%23archivebot" class="underlined-a" title="Webchat">Chat</a>
 			(<a href="ircs://irc.hackint.org/#archivebot" class="underlined-a" title="Chat in your IRC client">IRC</a>)<br>
 			<a href="http://archivebot.com/pipelines" class="underlined-a" title="Pipeline server status">Pipeline</a>(<a href="https://nulldata.foo/archivebot/pipejobcount.php" class="underlined-a">s</a>)<br>
 			<a href="https://transfer.archivete.am/" class="underlined-a" title="Upload URL text files">Transfer</a><br>
 			<a href="https://github.com/ArchiveTeam/ArchiveBot" class="underlined-a" title="ArchiveBot source code">Code</a><br>
+			</div>
 			</details>
 			<details class="drop-down">
 			<summary title="Show menu for other crawl information links"><span id="num-crawls">0</span> crawls</summary>
+			<div id="crawls-menu">
 			<a href="http://archivebot.com/pending" class="underlined-a" title="Pending/queued jobs">Pending</a><br>
 			<a href="http://archivebot.com/logs/recent" class="underlined-a" title="Recently active jobs">Recent</a><br>
 			<a href="http://archivebot.com/finished" class="underlined-a" id="crawls-finished" title="Recently finished jobs">Finished</a><br>
 			<a href="https://archive.fart.website/archivebot/viewer/" class="underlined-a" title="Uploaded and indexed jobs" id="crawls-viewer">Viewer</a><br>
 			<a href="https://archive.org/details/archivebot" class="underlined-a" title="Archived job data">Archive</a><br>
+			</div>
 			</details>
 			<details class="drop-down">
 			<summary title="Show menu for more documentation links"><a href="https://archivebot.readthedocs.io/" class="underlined-a">Docs</a></summary>
+			<div id="docs-menu">
 			<a href="https://archivebot.readthedocs.io/en/latest/commands.html" class="underlined-a" title="Commmands">Cmds</a><br>
 			<a href="https://github.com/ArchiveTeam/ArchiveBot/tree/master/db/ignore_patterns" class="underlined-a" title="Available ignoresets">Ignores</a><br>
 			(<a href="https://wiki.archiveteam.org/index.php/ArchiveBot/Ignore" class="underlined-a" title="Extra ignore information">More</a>)<br>
 			<a href="https://wiki.archiveteam.org/index.php/ArchiveBot#Usage_tips" class="underlined-a" title="Usage tips and tricks">Tips</a><br>
 			<a href="https://wiki.archiveteam.org/index.php/ArchiveBot" class="underlined-a" title="ArchiveBot wiki page">Wiki</a><br>
+			</div>
 			</details>
 			<details class="drop-down">
 			<summary title="Show logs for jobs where the filter regex matches the selected metadata items">Filter</summary>
@@ -592,6 +598,7 @@ For example: 1s1f1|example\.org|proactive">
 			</label>
 			<details class="drop-down">
 			<summary title="Show info and logs for jobs with these statuses">Status</summary>
+			<div id="status-menu">
 			<label class="job-info-queued">
 				<input type="checkbox" id="show-queued-jobs" onclick="ds.showQueuedJobs(this.checked);" accesskey="q">
 				Queued
@@ -622,6 +629,7 @@ For example: 1s1f1|example\.org|proactive">
 				Aborted
 			</label>
 			<br>
+			</div>
 			</details>
 		</div>
 		<div id="header-right">
