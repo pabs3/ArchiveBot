@@ -564,14 +564,21 @@ kbd {
 			<details class="drop-down">
 			<summary title="Show logs for jobs where the filter regex matches the selected metadata items">Filter</summary>
 			<div id="filter-types">
-			<input type="checkbox" id="filter-job-id" onclick="ds.jobsRenderer.applyFilter();" checked>
-			<label for="filter-job-id">ID</label><br>
-			<input type="checkbox" id="filter-job-url" onclick="ds.jobsRenderer.applyFilter();" accesskey="u" checked>
-			<label for="filter-job-url">URL</label><br>
+			<label>
+				<input type="checkbox" id="filter-job-id" onclick="ds.jobsRenderer.applyFilter();" checked>
+				ID
+			</label>
+			<br>
+			<label>
+				<input type="checkbox" id="filter-job-url" onclick="ds.jobsRenderer.applyFilter();" accesskey="u" checked>
+				URL
+			</label>
+			<br>
 			<label title="Explain">
 				<input type="checkbox" id="filter-job-note" onclick="ds.jobsRenderer.applyFilter();" accesskey="e" checked>
 				Note
-			</label><br>
+			</label>
+			<br>
 			</div>
 			</details>
 			<input id="filter-box" type="text" size="21" title="Show logs for jobs where this regular expression matches metadata.
@@ -585,18 +592,36 @@ For example: 1s1f1|example\.org|proactive">
 			</label>
 			<details class="drop-down">
 			<summary title="Show info and logs for jobs with these statuses">Status</summary>
-			<input type="checkbox" id="show-queued-jobs" onclick="ds.showQueuedJobs(this.checked);" accesskey="q">
-			<label class="job-info-queued" for="show-queued-jobs">Queued</label><br>
-			<input type="checkbox" id="show-running-jobs" onclick="ds.showRunningJobs(this.checked);" accesskey="r">
-			<label for="show-running-jobs">Running</label><br>
-			<input type="checkbox" id="show-finished-jobs" onclick="ds.showFinishedJobs(this.checked);" accesskey="d">
-			<label class="job-info-done" for="show-finished-jobs">Finished</label><br>
-			<input type="checkbox" id="show-failed-jobs" onclick="ds.showFailedJobs(this.checked);" accesskey="b">
-			<label class="job-info-failed" for="show-failed-jobs">Failed</label><br>
-			<input type="checkbox" id="show-fatal-jobs" onclick="ds.showFatalJobs(this.checked);" accesskey="c">
-			<label class="job-info-fatal" for="show-fatal-jobs">Fatal</label><br>
-			<input type="checkbox" id="show-aborted-jobs" onclick="ds.showAbortedJobs(this.checked);" accesskey="s">
-			<label class="job-info-aborted" for="show-aborted-jobs">Aborted</label><br>
+			<label class="job-info-queued">
+				<input type="checkbox" id="show-queued-jobs" onclick="ds.showQueuedJobs(this.checked);" accesskey="q">
+				Queued
+			</label>
+			<br>
+			<label>
+				<input type="checkbox" id="show-running-jobs" onclick="ds.showRunningJobs(this.checked);" accesskey="r">
+				Running
+			</label>
+			<br>
+			<label class="job-info-done">
+				<input type="checkbox" id="show-finished-jobs" onclick="ds.showFinishedJobs(this.checked);" accesskey="d">
+				Finished
+			</label>
+			<br>
+			<label class="job-info-failed">
+				<input type="checkbox" id="show-failed-jobs" onclick="ds.showFailedJobs(this.checked);" accesskey="b">
+				Failed
+			</label>
+			<br>
+			<label class="job-info-fatal">
+				<input type="checkbox" id="show-fatal-jobs" onclick="ds.showFatalJobs(this.checked);" accesskey="c">
+				Fatal
+			</label>
+			<br>
+			<label class="job-info-aborted">
+				<input type="checkbox" id="show-aborted-jobs" onclick="ds.showAbortedJobs(this.checked);" accesskey="s">
+				Aborted
+			</label>
+			<br>
 			</details>
 		</div>
 		<div id="header-right">
