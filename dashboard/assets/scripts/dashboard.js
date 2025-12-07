@@ -5,6 +5,8 @@
 
 "use strict";
 
+var debugRyz;
+
 String.prototype.removePrefix = function (prefix) {
     return this.startsWith(prefix) ? this.substr(prefix.length) : this.toString();
 };
@@ -142,6 +144,14 @@ function split(s, sep, maxsplit) {
 		head.push(tail); // no longer just the head.
 	}
 	return head;
+}
+
+function addAnyChangeListener(elem, func) {
+       // DOM0 handler for convenient use by Clear button
+       elem.onchange = func;
+       elem.addEventListener("keydown", func, false);
+       elem.addEventListener("paste", func, false);
+       elem.addEventListener("input", func, false);
 }
 
 // Based on closure-library's goog.string.regExpEscape
@@ -507,6 +517,9 @@ class JobsRenderer {
 	constructor(container, filterBox, historyLines, showNicks, showPipelines, contextMenuRenderer) {
 		this.container = container;
 		this.filterBox = filterBox;
+		if (debugRyz) {
+			addAnyChangeListener(this.filterBox, () => this.applyFilter());
+		} else {
 		this.filterTimeout = null;
 		this.filterBox.onchange = (e) => {
 			const repeats = [
@@ -539,6 +552,7 @@ class JobsRenderer {
 			}, ms);
 		};
 		this.filterBox.oninput = this.filterBox.onchange;
+		}
 		this.filterBox.onkeypress = (ev) => {
 			// Don't let `j` or `k` in the filter box cause the job window to switch
 			ev.stopPropagation();
@@ -786,12 +800,20 @@ class JobsRenderer {
 					className: "stats-elements",
 					onclick: (ev) => {
 						const filter = ds.getFilter();
-						if (RegExp(filter).test(jobData.url) && filter.startsWith("(?-i:^") && filter.endsWith("$)")) {
-							// If we're already showing just this log window,
-							// go to the previous filter, usually showing nothing.
-							ds.setFilter(ds.previousFilter);
+						if (debugRyz) {
+							if (RegExp(filter).test(jobData.url) && filter.startsWith("^") && filter.endsWith("$")) {
+								ds.setFilter(ds.previousFilter);
+							} else {
+								ds.setFilter(`^${regExpEscape(jobData.url)}$`);
+							}
 						} else {
-							ds.setFilter(`(?-i:^${regExpEscape(jobData.url)}$)`);
+							if (RegExp(filter).test(jobData.url) && filter.startsWith("(?-i:^") && filter.endsWith("$)")) {
+								// If we're already showing just this log window,
+								// go to the previous filter, usually showing nothing.
+								ds.setFilter(ds.previousFilter);
+							} else {
+								ds.setFilter(`(?-i:^${regExpEscape(jobData.url)}$)`);
+							}
 						}
 						ev.stopPropagation();
 						ev.preventDefault();
@@ -1256,7 +1278,7 @@ class JobsRenderer {
 	}
 
 	applyFilter() {
-		const query = RegExp(this.filterBox.value, "i");
+		const query = debugRyz ? RegExp(this.filterBox.value) : RegExp(this.filterBox.value, "i") ;
 		let matches = 0;
 		const matchedWindows = [];
 		const unmatchedWindows = [];
@@ -1340,7 +1362,11 @@ class JobsRenderer {
 			ds.setFilter("^$");
 		} else {
 			const newShownJob = this.jobs.sorted[idx];
-			ds.setFilter(`(?-i:^${regExpEscape(newShownJob.url)}$)`);
+			if (debugRyz) {
+				ds.setFilter(`^${regExpEscape(newShownJob.url)}$`);
+			} else {
+				ds.setFilter(`(?-i:^${regExpEscape(newShownJob.url)}$)`);
+			}
 		}
 	}
 
@@ -2107,6 +2133,7 @@ class Dashboard {
 		const replayEnd = args.replayEnd ? Number(args.replayEnd) : null;
 		const loadRecent = args.replayJob ? false : args.loadRecent ? Boolean(Number(args.loadRecent)) : true;
 		this.debug = args.debug ? Boolean(Number(args.debug)) : false;
+		debugRyz = args.debugRyz ? Boolean(Number(args.debugRyz)) : false;
 		const openHeader = args.openHeader ? Boolean(Number(args.openHeader)) : false;
 
 		// Append to page title to make it possible to identify the tab in Chrome's task manager
