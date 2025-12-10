@@ -6,6 +6,8 @@
 "use strict";
 
 var debugRyz;
+var debugCaseInsensitive;
+var debugFilterTimeout;
 
 String.prototype.removePrefix = function (prefix) {
     return this.startsWith(prefix) ? this.substr(prefix.length) : this.toString();
@@ -517,7 +519,7 @@ class JobsRenderer {
 	constructor(container, filterBox, historyLines, showNicks, showPipelines, contextMenuRenderer) {
 		this.container = container;
 		this.filterBox = filterBox;
-		if (debugRyz) {
+		if (debugRyz || debugFilterTimeout) {
 			addAnyChangeListener(this.filterBox, () => this.applyFilter());
 		} else {
 		this.filterTimeout = null;
@@ -800,7 +802,7 @@ class JobsRenderer {
 					className: "stats-elements",
 					onclick: (ev) => {
 						const filter = ds.getFilter();
-						if (debugRyz) {
+						if (debugRyz || debugCaseInsensitive) {
 							if (RegExp(filter).test(jobData.url) && filter.startsWith("^") && filter.endsWith("$")) {
 								ds.setFilter(ds.previousFilter);
 							} else {
@@ -1278,7 +1280,7 @@ class JobsRenderer {
 	}
 
 	applyFilter() {
-		const query = debugRyz ? RegExp(this.filterBox.value) : RegExp(this.filterBox.value, "i") ;
+		const query = (debugRyz || debugCaseInsensitive ) ? RegExp(this.filterBox.value) : RegExp(this.filterBox.value, "i") ;
 		let matches = 0;
 		const matchedWindows = [];
 		const unmatchedWindows = [];
@@ -1362,7 +1364,7 @@ class JobsRenderer {
 			ds.setFilter("^$");
 		} else {
 			const newShownJob = this.jobs.sorted[idx];
-			if (debugRyz) {
+			if (debugRyz || debugCaseInsensitive) {
 				ds.setFilter(`^${regExpEscape(newShownJob.url)}$`);
 			} else {
 				ds.setFilter(`(?-i:^${regExpEscape(newShownJob.url)}$)`);
@@ -1701,7 +1703,7 @@ class ContextMenuRenderer {
 		const jr = ds.jobsRenderer;
 		const info = jr.renderInfo[ident];
 		const jobData = jr.jobs.sorted.find((el) => el.ident === ident);
-		const igon = jobData.suppress_ignore_reports ? "igoff" : "igon";
+		const igon = jobData.suppress_ignore_reports ? "igon" : "igoff";
 		const note = jobData.note ?? "";
 		let url, pattern, con, min, max;
 
@@ -2134,6 +2136,8 @@ class Dashboard {
 		const loadRecent = args.replayJob ? false : args.loadRecent ? Boolean(Number(args.loadRecent)) : true;
 		this.debug = args.debug ? Boolean(Number(args.debug)) : false;
 		debugRyz = args.debugRyz ? Boolean(Number(args.debugRyz)) : false;
+		debugFilterTimeout = args.debugFilterTimeout ? Boolean(Number(args.debugFilterTimeout)) : false;
+		debugCaseInsensitive = args.debugCaseInsensitive ? Boolean(Number(args.debugCaseInsensitive)) : false;
 		const openHeader = args.openHeader ? Boolean(Number(args.openHeader)) : false;
 
 		// Append to page title to make it possible to identify the tab in Chrome's task manager
