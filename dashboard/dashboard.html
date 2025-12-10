@@ -443,15 +443,21 @@ kbd {
 	font-size: 12px;
 }
 
-.context-menu-entry {
-	display: inline;
+.context-menu-group {
+	display: block;
 	white-space: nowrap;
 	overflow: hidden;
 	max-width: 960px;
 	height: 26px;
 	line-height: 26px;
-	padding-left: 26px;
-	padding-right: 26px;
+	padding-left: 15px;
+	padding-right: 15px;
+}
+
+.context-menu-entry {
+	display: inline;
+	padding-left: 2px;
+	padding-right: 2px;
 	cursor: default;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
@@ -461,8 +467,9 @@ kbd {
 	user-select: none;
 }
 
-.context-menu-entry:hover {
-	text-decoration: none !important /* Don't underline 'Open link in new tab' */;
+.context-menu-entry:hover,
+.context-menu-group:has(.context-menu-entry:hover) .context-menu-related {
+	text-decoration: none !important /* Don't underline links that open in new tabs */;
 	background-color: #4281F4 !important; /* Override highlighting current selection */
 	color: #fff !important;
 }

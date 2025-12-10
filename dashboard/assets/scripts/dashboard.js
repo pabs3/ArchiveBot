@@ -118,7 +118,7 @@ function getParentByPrefix(elem, attr, prefix) {
 			return [parent, value.removePrefix(prefix)];
 		}
 	} else {
-		return [null, null];
+		return [null, []];
 	}
 }
 
@@ -1417,9 +1417,9 @@ const igsetMap = {
 	singletumblr: "tumblr",
 }
 /**
- * This context menu pops up when you right-click anywhere in
- * a log window, helping you copy an !ig command based on
- * the URL you right-clicked, and other useful commands.
+ * This context menu pops up when you right-click in some places
+ * in the window, helping you copy different ArchiveBot commands
+ * based on the place you right-clicked, and other useful actions.
  */
 class ContextMenuRenderer {
 	// FIXME: const with ES7
@@ -1455,6 +1455,7 @@ class ContextMenuRenderer {
 		this.visible = false;
 		this.callAfterBlurFns = [];
 		this.element = byId("context-menu");
+		this.group = null;
 		this.maxSuggestedIgnores = 8;
 	}
 
@@ -1479,17 +1480,17 @@ class ContextMenuRenderer {
 		return paths;
 	}
 
-	getIgsetCommands(ident, url) {
-		const commands = [];
+	getIgsets(ident, url) {
+		const igsets = [];
 		for (const [igset, includes] of Object.entries(igsetMap)) {
 			if (includes.split(' ').some(i => url.includes(i))) {
-				commands.push(`!igset ${ident} ${igset}`);
+				igsets.push(igset);
 			}
 		}
-		return commands;
+		return igsets;
 	}
 
-	getPathIgnoreCommands(ident, url, maxSuggestedIgnores) {
+	getPathIgnoreCommands(ident, url) {
 		// For testing a URL with enough path segments to cause [N more ignore suggestions]
 		// url = "https://example.com/asset/620787/liveblog/api/cms/modules/cms/modules/cms/modules/cms/modules/cms/modules/cms/modules/";
 		const schema = url.split(":")[0];
@@ -1499,12 +1500,12 @@ class ContextMenuRenderer {
 		const reSchema = schema.startsWith("http") ? "https?" : "ftp";
 		const pathVariants = this.getPathVariants(path);
 
-		let menuVariants = [];
+		let ignoreCommands = [];
 		if (query) {
 			const queryGeneral = regExpEscape(query).replace(regExpGenericiseRe, regExpGenericiser);
-			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/[^?]*\\?${queryGeneral}$`);
-			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?")}${queryGeneral}$`);
-			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?" + query)}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/[^?]*\\?${queryGeneral}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?")}${queryGeneral}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?" + query)}$`);
 		} else {
 			const pathSplit = path.split("/");
 			if (pathSplit.at(-1) === "") {
@@ -1512,35 +1513,62 @@ class ContextMenuRenderer {
 			}
 			const pathGeneral = regExpEscape(path).replace(regExpGenericiseRe, regExpGenericiser);
 			const pathLastGeneral = regExpEscape(pathSplit.at(-1)).replace(regExpGenericiseRe, regExpGenericiser);
-			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/.*/${pathLastGeneral}$`);
-			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/.*/${regExpEscape(pathSplit.at(-1))}$`);
-			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}${pathGeneral}$`);
-			menuVariants.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path)}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/.*/${pathLastGeneral}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/.*/${regExpEscape(pathSplit.at(-1))}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}${pathGeneral}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path)}$`);
 		}
-		menuVariants.push(...pathVariants.map((p) => {
+		// Remove duplicates in an order-preserving way
+		ignoreCommands = Array.from(new Map(ignoreCommands.map((i) => [i, 1])).keys());
+
+		let ignoreCommandsPath = [];
+		ignoreCommandsPath.push(...pathVariants.map((p) => {
 			return `!ig ${ident} ^${reSchema}://${regExpEscape(domain + p)}`;
 		}));
 
-		// Remove duplicates in an order-preserving way
-		menuVariants = Array.from(new Map(menuVariants.map((i) => [i, 1])).keys());
-
-		let somePathVariants = pathVariants.slice(-maxSuggestedIgnores);
-		let ignoresRemaining = pathVariants.length - somePathVariants.length;
-		// If only 1 more suggested ignore available, just put it in the context menu
-		// to avoid a [... more ignore suggestions] taking up the same amount of space.
-		if (ignoresRemaining === 1) {
-			somePathVariants = pathVariants;
-			ignoresRemaining = 0;
-		}
 		return [
-			ignoresRemaining,
-			menuVariants,
+			ignoreCommands,
+			ignoreCommandsPath,
 		];
 	}
 
-	makeEntry(entry) {
+	addItem(item) {
+		appendAny(this.group ?? this.element, item);
+	}
+
+	menuRelated(entry) {
+		entry.classList.add("context-menu-related");
+	}
+
+	makeRelated(entry) {
+		if (typeof entry === "string") {
+			entry = h("span", null, entry);
+		}
+		this.menuRelated(entry);
+		this.addItem(entry);
+	}
+
+	menuEntry(entry) {
 		entry.classList.add("context-menu-entry");
-		appendAny(this.element, entry);
+	}
+
+	makeEntry(entry) {
+		this.menuEntry(entry);
+		this.addItem(entry);
+	}
+
+	menuGroup(group) {
+		group.classList.add("context-menu-group");
+	}
+
+	makeGroup(insert = null) {
+		this.group = h("div");
+		this.menuGroup(this.group);
+		if (insert === null) {
+			appendAny(this.element, this.group);
+		} else {
+			insert.after(this.group);
+		}
 	}
 
 	makePathStatusCommands(url) {
@@ -1561,11 +1589,11 @@ class ContextMenuRenderer {
 		const viewer_url = new URL(viewer.href);
 		viewer_url.searchParams.set("q", domain);
 
-		appendAny(this.element, h("a", { href: finished_url.href, className: "context-menu-entry" }, "Finished"));
-		appendAny(this.element, " or ");
-		appendAny(this.element, h("a", { href: viewer_url.href, className: "context-menu-entry" }, "Viewer"));
-		appendAny(this.element, ` for ${domain}`);
-		appendAny(this.element, h("br"));
+		this.makeGroup();
+		this.makeEntry(h("a", { href: finished_url.href }, "Finished"));
+		this.addItem(" or ");
+		this.makeEntry(h("a", { href: viewer_url.href }, "Viewer"));
+		this.addItem(` for ${domain}`);
 	}
 
 	replaceIdent(str, ident) {
@@ -1579,10 +1607,7 @@ class ContextMenuRenderer {
 			return str.replace(_ident_, ` ${start}… `);
 	}
 
-	makeCopyEntries(ident, commands, {prefix="Copy ", after=null}) {
-		if (after === null) {
-			after = h("br");
-		}
+	makeCopyEntries(ident, commands, {group=true, before="Copy ", after=null, insert=null} = {}) {
 		for (const c of commands) {
 			let text, copy;
 			if (Array.isArray(c)) {
@@ -1590,15 +1615,35 @@ class ContextMenuRenderer {
 			} else {
 				text = copy = c;
 			}
-			this.makeEntry(h("span", { onclick: this.makeCopyTextFn(copy) }, `${prefix}${this.replaceIdent(text, ident)}`));
-			appendAny(this.element, after);
+			if (group) {
+				this.makeGroup(insert);
+			}
+			const entry = h(
+				"span",
+				{ onclick: this.makeCopyTextFn(copy) },
+				this.replaceIdent(text, ident),
+			)
+			this.menuEntry(entry);
+			if (group || insert === null) {
+				this.addItem(entry);
+			} else {
+				insert.after(entry);
+			}
+			if (before !== null) {
+				entry.before(before)
+			}
+			if (after !== null) {
+				entry.after(after)
+			}
 		}
 	}
 
 	makeAlwaysConcurrencyEntries(ident) {
 		const start = ident.substring(0, 3);
 		// FIXME: add/highlight current
-		appendAny(this.element, `Copy !con ${start}… `);
+		this.makeGroup();
+		this.addItem("Copy ");
+		this.makeRelated(`!con ${start}… `);
 		this.makeCopyEntries(ident, [
 			["1", `!con ${ident} 1`],
 			["2", `!con ${ident} 2`],
@@ -1609,17 +1654,18 @@ class ContextMenuRenderer {
 			["9", `!con ${ident} 9`], //FIXME: disable this?
 			["12", `!con ${ident} 12`], //FIXME: disable this?
 			["24", `!con ${ident} 24`], //FIXME: disable this?
-		], { prefix: "", after: " "});
-		appendAny(this.element, h("br"));
+		], { group: false, before: "", after: " "});
 	}
 
 	makeAlwaysDelayEntries(ident) {
 		const start = ident.substring(0, 3);
 		// FIXME: add/highlight current
-		appendAny(this.element, `Copy !d ${start}… `);
+		this.makeGroup();
+		this.addItem("Copy ");
+		this.makeRelated(`!d ${start}… `);
 		this.makeCopyEntries(ident, [
 			["0", `!d ${ident} 0 0`], // FIXME: disable this?
-			["250-375 ms", `!d ${ident} 250 375`],
+			["250-375ms", `!d ${ident} 250 375`],
 			["0.5s", `!d ${ident} 500 500`],
 			["1s", `!d ${ident} 1000 1000`],
 			["2s", `!d ${ident} 2000 2000`],
@@ -1627,59 +1673,108 @@ class ContextMenuRenderer {
 			["1min", `!d ${ident} 60000 60000`],
 			["3min", `!d ${ident} 180000 180000`],
 			["1hr", `!d ${ident} 3600000 3600000`],
-		], { prefix: "", after: " "});
-		appendAny(this.element, h("br"));
+		], { group: false, before: "", after: " "});
 	}
 
 	makeAlwaysEntries(ident, igon, note) {
 		const start = ident.substring(0, 3);
+
 		// FIXME: make these dependent on the job status
+
 		this.makeCopyEntries(ident, [
 			`!${igon} ${ident}`,
 		], {});
+
 		this.makeAlwaysConcurrencyEntries(ident);
+
 		this.makeAlwaysDelayEntries(ident);
-		appendAny(this.element, "Copy ");
+
+		this.makeGroup();
+		this.addItem("Copy ");
 		this.makeCopyEntries(ident, [
 			["!status", `!status ${ident}`],
 			["!whereis", `!whereis ${ident}`],
 			["!expire", `!expire ${ident}`],
-		], { prefix: "", after: " "});
-		appendAny(this.element, ` ${start}…`);
-		appendAny(this.element, h("br"));
-		appendAny(this.element, "Copy ");
+		], { group: false, before: "", after: " "});
+		this.makeRelated(` ${start}…`);
+
+		this.makeGroup();
+		this.addItem("Copy ");
 		this.makeCopyEntries(ident, [
 			["!abort", `!abort ${ident}`],
 			["!explain", `!explain ${ident} ${note}`],
 			["!yahoo", `!yahoo ${ident}`], // FIXME: disable this?
-		], { prefix: "", after: " "});
-		appendAny(this.element, ` ${start}…`);
+		], { group: false, before: "", after: " "});
+		this.makeRelated(` ${start}…`);
+	}
+
+	splitIgnoreCommandsPath(ignoreCommandsPath, maxSuggestedIgnores) {
+		let some = ignoreCommandsPath.slice(-maxSuggestedIgnores);
+		let remaining = ignoreCommandsPath.slice(0, -maxSuggestedIgnores);
+		// If only 1 more suggested ignore available, just put it in the context menu
+		// to avoid a [... more ignore suggestions] taking up the same amount of space.
+		if (remaining.length === 1) {
+			some.unshift(...remaining);
+			remaining = [];
+		}
+		return [
+			some,
+			remaining,
+		];
+	}
+
+	ignoresRemainingText(ignoresRemaining) {
+		return `[${ignoresRemaining.length} more path ignore suggestions]`;
 	}
 
 	makeUrlPathEntries(ident, url, igon, maxSuggestedIgnores) {
-		const igsetCommands = this.getIgsetCommands(ident, url);
-		const [ignoresRemaining, ignorePathCommands] = this.getPathIgnoreCommands(ident, url, maxSuggestedIgnores);
+		const start = ident.substring(0, 3);
+
 		// Unfortunately, this does not open it in a background tab
 		// like the real context menu does.
+		this.makeGroup();
 		this.makeEntry(h("a", { href: url }, "Open link in new tab"));
+
+		this.makeGroup();
 		this.makeEntry(h("span", { onclick: this.makeCopyTextFn(url) }, "Copy link address"));
-		appendAny(this.element, h("br"));
-		this.makeCopyEntries(ident, igsetCommands, {});
-		if (ignoresRemaining) {
+
+		const igsets = this.getIgsets(ident, url);
+		if (igsets.length) {
+			this.makeGroup();
+			this.addItem("Copy ");
+			this.makeRelated(`!igset ${start}… `);
+			this.makeCopyEntries(ident, igsets.map((igset) => {
+				return [igset, `!igset ${ident} ${igset}`];
+			}), { group: false, before: "", after: " "} );
+		}
+
+		let [ignoreCommands, ignoreCommandsPath] = this.getPathIgnoreCommands(ident, url, maxSuggestedIgnores);
+		this.makeCopyEntries(ident, ignoreCommands, {});
+
+		let ignoresRemaining = ignoreCommandsPath;
+		[ignoreCommandsPath, ignoresRemaining] = this.splitIgnoreCommandsPath(ignoresRemaining, maxSuggestedIgnores);
+		if (ignoresRemaining.length) {
+			this.makeGroup();
 			this.makeEntry(
 				h(
 					"span",
 					{
 						onclick: (ev) => {
 							ev.stopPropagation();
-							this.resetEntries(ident, url, igon, maxSuggestedIgnores + 6);
+							[ignoreCommandsPath, ignoresRemaining] = this.splitIgnoreCommandsPath(ignoresRemaining, 6);
+							this.makeCopyEntries(ident, ignoreCommandsPath.reverse(), {insert: ev.target.parentElement});
+							if (ignoresRemaining.length) {
+								ev.target.textContent = this.ignoresRemainingText(ignoresRemaining);
+							} else {
+								ev.target.parentElement.remove();
+							}
 						},
 					},
-					`[${ignoresRemaining} more ignore suggestion${ignoresRemaining === 1 ? "" : "s"}]`,
+					this.ignoresRemainingText(ignoresRemaining),
 				),
 			);
 		}
-		this.makeCopyEntries(ident, ignorePathCommands, {after: null});
+		this.makeCopyEntries(ident, ignoreCommandsPath, {});
 		this.makePathStatusCommands(url);
 	}
 
@@ -1777,13 +1872,15 @@ class ContextMenuRenderer {
 		const jobUrl = jobData.url;
 		const jobNote = jobData.note;
 
+		this.makeGroup();
 		this.makeEntry(h("span", { onclick: this.makeCopyTextFn(jobUrl) }, "Copy link address"));
-		appendAny(this.element, h("br"));
+
+		this.makeGroup();
 		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(jobUrl)) } }, `Filter by ${jobUrl}`));
-		appendAny(this.element, h("br"));
+
 		if (jobNote) {
+			this.makeGroup();
 			this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(jobNote)) } }, `Filter by ${jobNote}`));
-			appendAny(this.element, h("br"));
 		}
 
 		this.show(ev);
@@ -1871,8 +1968,8 @@ class ContextMenuRenderer {
 			const errors = info.ignores_errors;
 			const mapper = ([pattern, error]) => `!ug ${ident} ${pattern}`;
 			const cmds = Array.from(errors).sort().map(mapper);
-			appendAny(this.element, "Invalid ignores:");
-			appendAny(this.element, h("br"));
+			this.makeGroup();
+			this.addItem("Invalid ignores:");
 			this.makeCopyEntries(ident, cmds, {});
 			info.statsElements.ignores.classList.remove('job-ignores-error');
 		}
@@ -1890,10 +1987,11 @@ class ContextMenuRenderer {
 		const pipelineId = jobData.pipeline_id;
 		const pipelineNick = jr.pipelines[pipelineId];
 
+		this.makeGroup();
 		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(pipelineNick)) } }, `Filter by ${pipelineNick}`));
-		appendAny(this.element, h("br"));
+
+		this.makeGroup();
 		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(pipelineId)) } }, `Filter by ${pipelineId}`));
-		appendAny(this.element, h("br"));
 
 		this.show(ev);
 	}
