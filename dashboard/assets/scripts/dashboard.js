@@ -1573,7 +1573,7 @@ class ContextMenuRenderer {
 		const hostname_url = new URL('http://example.com/');
 		hostname_url.protocol = original_url.protocol;
 		hostname_url.hostname = original_url.hostname;
-		this.makeCopyEntries(null, [`!status ${hostname_url.href}`], {});
+		this.makeCopyEntries(null, [`!status ${hostname_url.href}`]);
 
 		const finished = byId("crawls-finished");
 		const finished_url = new URL(finished.href);
@@ -1675,9 +1675,7 @@ class ContextMenuRenderer {
 
 		// FIXME: make these dependent on the job status
 
-		this.makeCopyEntries(ident, [
-			`!${igon} ${ident}`,
-		], {});
+		this.makeCopyEntries(ident, [`!${igon} ${ident}`]);
 
 		this.makeAlwaysConcurrencyEntries(ident);
 
@@ -1743,7 +1741,7 @@ class ContextMenuRenderer {
 		}
 
 		let [ignoreCommands, ignoreCommandsPath] = this.getPathIgnoreCommands(ident, url, maxSuggestedIgnores);
-		this.makeCopyEntries(ident, ignoreCommands, {});
+		this.makeCopyEntries(ident, ignoreCommands);
 
 		let ignoresRemaining = ignoreCommandsPath;
 		[ignoreCommandsPath, ignoresRemaining] = this.splitIgnoreCommandsPath(ignoresRemaining, maxSuggestedIgnores);
@@ -1768,7 +1766,7 @@ class ContextMenuRenderer {
 				),
 			);
 		}
-		this.makeCopyEntries(ident, ignoreCommandsPath, {});
+		this.makeCopyEntries(ident, ignoreCommandsPath);
 		this.makePathStatusCommands(url);
 	}
 
@@ -1809,7 +1807,7 @@ class ContextMenuRenderer {
 		}
 
 		if (con) {
-			this.makeCopyEntries(ident, [`!con ${ident} ${con}`], {});
+			this.makeCopyEntries(ident, [`!con ${ident} ${con}`]);
 		}
 
 		if (min !== undefined && max !== undefined) {
@@ -1818,7 +1816,7 @@ class ContextMenuRenderer {
 
 		if (pattern) {
 			// FIXME: show any igsets this pattern is from
-			this.makeCopyEntries(ident, [`!ug ${ident} ${pattern}`], {});
+			this.makeCopyEntries(ident, [`!ug ${ident} ${pattern}`]);
 		}
 		if (url) {
 			this.makeUrlPathEntries(ident, url, igon, maxSuggestedIgnores);
@@ -1851,7 +1849,7 @@ class ContextMenuRenderer {
 			cmd += ` -u '${jobData.user_agent}'`;
 		if ("no_offsite_links" in jobData && jobData.no_offsite_links)
 			cmd += " --no-offsite";
-		this.makeCopyEntries(null, [cmd], {});
+		this.makeCopyEntries(null, [cmd]);
 
 		this.show(ev);
 	}
@@ -1917,7 +1915,7 @@ class ContextMenuRenderer {
 		const cons = Array.from(elems, (c) => c.textContent);
 		const cmds = cons.map((con) => `!con ${ident} ${con}`);
 
-		this.makeCopyEntries(ident, cmds, {});
+		this.makeCopyEntries(ident, cmds);
 
 		if (elems.length > 1) {
 			const cur = elems.indexOf(target);
@@ -1937,7 +1935,7 @@ class ContextMenuRenderer {
 		const delays = Array.from(elems, (d) => [d.dataset.min, d.dataset.max]);
 		const cmds = delays.map(([min, max]) => this.delayInfo(ident, min, max));
 
-		this.makeCopyEntries(ident, cmds, {});
+		this.makeCopyEntries(ident, cmds);
 
 		if (elems.length > 1) {
 			const cur = elems.indexOf(target);
@@ -1956,7 +1954,7 @@ class ContextMenuRenderer {
 		const info = ds.jobsRenderer.renderInfo[ident];
 		const igon = target.textContent === "igon" ? "igoff" : "igon";
 
-		this.makeCopyEntries(ident, [`!${igon} ${ident}`], {});
+		this.makeCopyEntries(ident, [`!${igon} ${ident}`]);
 
 		if ("ignores_errors" in info) {
 			const errors = info.ignores_errors;
@@ -1964,7 +1962,7 @@ class ContextMenuRenderer {
 			const cmds = Array.from(errors).sort().map(mapper);
 			this.makeGroup();
 			this.addItem("Invalid ignores:");
-			this.makeCopyEntries(ident, cmds, {});
+			this.makeCopyEntries(ident, cmds);
 			info.statsElements.ignores.classList.remove('job-ignores-error');
 		}
 
