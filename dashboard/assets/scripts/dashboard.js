@@ -1499,6 +1499,7 @@ class ContextMenuRenderer {
 			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/[^?]*\\?${queryGeneral}$`);
 			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?")}${queryGeneral}$`);
 			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?" + query)}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?")}`);
 		} else {
 			const pathSplit = path.split("/");
 			if (pathSplit.at(-1) === "") {
