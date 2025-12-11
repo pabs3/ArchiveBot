@@ -1887,6 +1887,7 @@ class ContextMenuRenderer {
 
 		const ircNick = jobData.started_by;
 
+		this.makeGroup();
 		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(ircNick)) } }, `Filter by ${ircNick}`));
 
 		this.show(ev);
@@ -1902,6 +1903,7 @@ class ContextMenuRenderer {
 
 		if (jobNote) {
 			this.prepare();
+			this.makeGroup();
 			this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(jobNote)) } }, `Filter by ${jobNote}`));
 			this.show(ev);
 		}
