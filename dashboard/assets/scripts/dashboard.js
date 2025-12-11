@@ -5,10 +5,6 @@
 
 "use strict";
 
-var debugRyz;
-var debugCaseInsensitive;
-var debugFilterTimeout;
-
 String.prototype.removePrefix = function (prefix) {
     return this.startsWith(prefix) ? this.substr(prefix.length) : this.toString();
 };
@@ -519,9 +515,6 @@ class JobsRenderer {
 	constructor(container, filterBox, historyLines, showNicks, showPipelines, contextMenuRenderer) {
 		this.container = container;
 		this.filterBox = filterBox;
-		if (debugRyz || debugFilterTimeout) {
-			addAnyChangeListener(this.filterBox, () => this.applyFilter());
-		} else {
 		this.filterTimeout = null;
 		this.filterBox.onchange = (e) => {
 			const repeats = [
@@ -554,7 +547,6 @@ class JobsRenderer {
 			}, ms);
 		};
 		this.filterBox.oninput = this.filterBox.onchange;
-		}
 		this.filterBox.onkeypress = (ev) => {
 			// Don't let `j` or `k` in the filter box cause the job window to switch
 			ev.stopPropagation();
@@ -802,20 +794,12 @@ class JobsRenderer {
 					className: "stats-elements",
 					onclick: (ev) => {
 						const filter = ds.getFilter();
-						if (debugRyz || debugCaseInsensitive) {
-							if (RegExp(filter).test(jobData.url) && filter.startsWith("^") && filter.endsWith("$")) {
-								ds.setFilter(ds.previousFilter);
-							} else {
-								ds.setFilter(`^${regExpEscape(jobData.url)}$`);
-							}
+						const start = ds.jobsRenderer.filterCaseInsensitive ? "(?-i:^" : "^";
+						const end = ds.jobsRenderer.filterCaseInsensitive ? "$)" : "$";
+						if (RegExp(filter).test(jobData.url) && filter.startsWith(start) && filter.endsWith(end)) {
+							ds.setFilter(ds.previousFilter);
 						} else {
-							if (RegExp(filter).test(jobData.url) && filter.startsWith("(?-i:^") && filter.endsWith("$)")) {
-								// If we're already showing just this log window,
-								// go to the previous filter, usually showing nothing.
-								ds.setFilter(ds.previousFilter);
-							} else {
-								ds.setFilter(`(?-i:^${regExpEscape(jobData.url)}$)`);
-							}
+							ds.setFilter(`${start}${regExpEscape(jobData.url)}${end}`);
 						}
 						ev.stopPropagation();
 						ev.preventDefault();
@@ -1280,7 +1264,18 @@ class JobsRenderer {
 	}
 
 	applyFilter() {
-		const query = (debugRyz || debugCaseInsensitive ) ? RegExp(this.filterBox.value) : RegExp(this.filterBox.value, "i") ;
+		try {
+			this.applyFilterToJobs();
+			this.filterBox.setCustomValidity("");
+		} catch (e) {
+			this.filterBox.setCustomValidity(e);
+		}
+		this.filterBox.reportValidity();
+	}
+
+	applyFilterToJobs() {
+		const flags = this.filterCaseInsensitive ?  "i" : undefined;
+		const query = RegExp(this.filterBox.value, flags);
 		let matches = 0;
 		const matchedWindows = [];
 		const unmatchedWindows = [];
@@ -1364,11 +1359,9 @@ class JobsRenderer {
 			ds.setFilter("^$");
 		} else {
 			const newShownJob = this.jobs.sorted[idx];
-			if (debugRyz || debugCaseInsensitive) {
-				ds.setFilter(`^${regExpEscape(newShownJob.url)}$`);
-			} else {
-				ds.setFilter(`(?-i:^${regExpEscape(newShownJob.url)}$)`);
-			}
+			const start = this.filterCaseInsensitive ? "(?-i:^" : "^";
+			const end = this.filterCaseInsensitive ? "$)" : "$";
+			ds.setFilter(`${start}${regExpEscape(newShownJob.url)}${end}`);
 		}
 	}
 
@@ -2220,6 +2213,7 @@ class Dashboard {
 		const filterJobNote = args.filterJobNote ? Boolean(Number(args.filterJobNote)) : true;
 		const filterJobPipe = args.filterJobPipe ? Boolean(Number(args.filterJobPipe)) : true;
 		const filterJobNick = args.filterJobNick ? Boolean(Number(args.filterJobNick)) : true;
+		const filterCaseInsensitive = args.filterCaseInsensitive ? Boolean(Number(args.filterCaseInsensitive)) : true;
 		const showAllHeaders = args.initialFilter && args.showAllHeaders ? Boolean(Number(args.showAllHeaders)) : true;
 		const showQueuedJobs = args.showQueuedJobs ? Boolean(Number(args.showQueuedJobs)) : true;
 		const showRunningJobs = args.showRunningJobs ? Boolean(Number(args.showRunningJobs)) : true;
@@ -2233,9 +2227,6 @@ class Dashboard {
 		const replayEnd = args.replayEnd ? Number(args.replayEnd) : null;
 		const loadRecent = args.replayJob ? false : args.loadRecent ? Boolean(Number(args.loadRecent)) : true;
 		this.debug = args.debug ? Boolean(Number(args.debug)) : false;
-		debugRyz = args.debugRyz ? Boolean(Number(args.debugRyz)) : false;
-		debugFilterTimeout = args.debugFilterTimeout ? Boolean(Number(args.debugFilterTimeout)) : false;
-		debugCaseInsensitive = args.debugCaseInsensitive ? Boolean(Number(args.debugCaseInsensitive)) : false;
 		const openHeader = args.openHeader ? Boolean(Number(args.openHeader)) : false;
 
 		// Append to page title to make it possible to identify the tab in Chrome's task manager
@@ -2342,6 +2333,8 @@ class Dashboard {
 		if (showPipelines) {
 			byId("filter-job-pipeline").checked = filterJobPipe;
 		}
+
+		this.jobsRenderer.filterCaseInsensitive = filterCaseInsensitive;
 
 		if (args.initialFilter != null) {
 			byId("set-filter-none").after(
