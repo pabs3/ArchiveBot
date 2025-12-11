@@ -1732,12 +1732,16 @@ class ContextMenuRenderer {
 
 		const igsets = this.getIgsets(ident, url);
 		if (igsets.length) {
-			this.makeGroup();
-			this.addItem("Copy ");
-			this.makeRelated(`!igset ${start}… `);
-			this.makeCopyEntries(ident, igsets.map((igset) => {
-				return [igset, `!igset ${ident} ${igset}`];
-			}), { group: false, before: "", after: " "} );
+			if (igsets.length > 1) {
+				this.makeGroup();
+				this.addItem("Copy ");
+				this.makeRelated(`!igset ${start}… `);
+				this.makeCopyEntries(ident, igsets.map((igset) => {
+					return [igset, `!igset ${ident} ${igset}`];
+				}), { group: false, before: "", after: " "} );
+			} else {
+				this.makeCopyEntries(ident, [`!igset ${ident} ${igsets[0]}`]);
+			}
 		}
 
 		let [ignoreCommands, ignoreCommandsPath] = this.getPathIgnoreCommands(ident, url, maxSuggestedIgnores);
