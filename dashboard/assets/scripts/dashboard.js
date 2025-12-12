@@ -177,19 +177,42 @@ function replaceFnArgs(args) {
 	return [groups, offset, string, namedGroups];
 }
 
-const regExpGenericiseRe = /(?<sha1>[0-9a-fA-F]{40})|(?<hex>0[xX][0-9a-fA-F]*[a-fA-F]+[0-9a-fA-F]+)|(?<digits>\d+)/g;
+const regExpsGenericise = {
+	gitobject: ["/objects/[0-9a-fA-F]{2}/[0-9a-fA-F]{38}"],
+	baddate: ["(1\\d{3}|20[3-9]\\d|2[1-9]\\d\\d)(-\\d\\d){2}"],
+	uuid: ["[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"],
+	sha512: ["[0-9a-fA-F]{128}"],
+	sha256: ["[0-9a-fA-F]{64}"],
+	sha1: ["[0-9a-fA-F]{40}"],
+	hex: [
+			"0[xX][0-9a-fA-F]*[a-fA-F]+[0-9a-fA-F]*",
+			(match) => `0[xX][a-fA-F0-9]{${match.length}}`,
+		],
+	digits: [
+		"\\d+",
+		(match) => `\\d{${match.length}}`,
+	],
+}
+
+const regExpsGenericiseStr = Object.entries(regExpsGenericise).map(([name, re]) => `(?<${name}>${re[0]})`).join("|");
+const regExpGenericiseRe = new RegExp(regExpsGenericiseStr, "g");
 
 function regExpGenericiser(match, ...args) {
 	const [groups, offset, string, namedGroups] = replaceFnArgs(args);
 	if (namedGroups === undefined) {
 		return match;
-	} else if (namedGroups["sha1"] !== undefined) {
-		return `[a-fA-F0-9]{40}`;
-	} else if (namedGroups["hex"] !== undefined) {
-		return `0[xX][a-fA-F0-9]{${match.length}}`;
-	} else if (namedGroups["digits"] !== undefined) {
-		return `\\d{${match.length}}`;
 	} else {
+		for (const [name, re] of Object.entries(regExpsGenericise)) {
+			if (namedGroups[name] !== undefined) {
+				if (re.length == 2) {
+					return regExpsGenericise[name][1](match);
+				} else if (re.length = 1) {
+					return re[0];
+				} else {
+					throw Error(`Error: regExpGenericise bad syntax`);
+				}
+			}
+		}
 		return match;
 	}
 }
