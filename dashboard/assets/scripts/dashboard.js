@@ -2048,7 +2048,10 @@ class ContextMenuRenderer {
 		// menu up, so that it appears to have opened from its bottom-left corner.
 		// + 1 pixel so that the pointer lands inside the element and turns on cursor: default
 		if (ev.clientY + this.element.offsetHeight > document.documentElement.clientHeight) {
-			this.element.style.top = `${ev.clientY - this.element.offsetHeight + 1}px`;
+			let top = ev.clientY - this.element.offsetHeight + 1;
+			// Keep the top of the context menu inside the viewport too.
+			if (top < 0) top = 0;
+			this.element.style.top = `${top}px`;
 		}
 	}
 
