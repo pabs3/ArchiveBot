@@ -1471,6 +1471,9 @@ class ContextMenuRenderer {
 		this.visible = false;
 		this.callAfterBlurFns = [];
 		this.element = byId("context-menu");
+		this.element.onwheel = (ev) => {
+			ev.stopPropagation();
+		};
 		this.group = null;
 		this.maxSuggestedIgnores = 8;
 	}
