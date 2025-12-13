@@ -1614,7 +1614,8 @@ class ContextMenuRenderer {
 		this.makeEntry(h("a", { href: finished_url.href }, "Finished"));
 		this.addItem(" or ");
 		this.makeEntry(h("a", { href: viewer_url.href }, "Viewer"));
-		this.addItem(` for ${domain}`);
+		this.addItem(" for ");
+		this.makeEntry(h("a", { href: hostname_url.href }, domain));
 	}
 
 	replaceIdent(str, ident) {
