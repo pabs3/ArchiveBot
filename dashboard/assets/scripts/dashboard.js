@@ -1715,12 +1715,6 @@ class ContextMenuRenderer {
 			["!status", `!status ${ident}`],
 			["!whereis", `!whereis ${ident}`],
 			["!expire", `!expire ${ident}`],
-		], { group: false, before: "", after: " "});
-		this.makeRelated(` ${start}…`);
-
-		this.makeGroup();
-		this.addItem("Copy ");
-		this.makeCopyEntries(ident, [
 			["!abort", `!abort ${ident}`],
 			["!explain", `!explain ${ident} ${note}`],
 			["!yahoo", `!yahoo ${ident}`], // FIXME: disable this?
