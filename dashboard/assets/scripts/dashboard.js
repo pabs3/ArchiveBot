@@ -1472,7 +1472,10 @@ class ContextMenuRenderer {
 		this.callAfterBlurFns = [];
 		this.element = byId("context-menu");
 		this.element.onwheel = (ev) => {
-			ev.stopPropagation();
+			if (this.element.scrollHeight != this.element.clientHeight) {
+				// Allow scrolling when scrollbar present
+				ev.stopPropagation();
+			}
 		};
 		this.group = null;
 		this.maxSuggestedIgnores = 8;
