@@ -1072,6 +1072,9 @@ class JobsRenderer {
 				parts.splice(1, 0, link);
 				logSegment.lastChild.replaceChildren(...parts);
 				logSegment.lastChild.className = "line-error";
+				if (wgetCodesRetried.test(error)) {
+					link.classList.add("url-retry");
+				}
 			}
 
 			let status = new JobStatus(info.statsElements.jobInfo.classList);
