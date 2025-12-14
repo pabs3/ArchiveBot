@@ -389,6 +389,7 @@ class JobsTracker {
 				console.log(log);
 				*/
 				this.history[ident].unshift(jobData);
+				this.sorted[this.sorted.findIndex((el) => el.ident === ident)] = jobData;
 			}
 		}
 		return [!alreadyKnown, jobDataChanged, jobDataCopied];
