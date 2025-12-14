@@ -10,6 +10,8 @@ class Ignores < Webmachine::Resource
   end
 
   def to_text
+    response.headers['Access-Control-Allow-Origin'] = '*'
+
     buffer = []
 
     return 400 if request.query['compact'] == 'true' && keys.length > 1
