@@ -2001,6 +2001,9 @@ class ContextMenuRenderer {
 
 		this.makeCopyEntries(ident, [`!${igon} ${ident}`]);
 
+		this.makeGroup();
+		this.makeEntry(h("a", { href: `//archivebot.com/ignores/${ident}?compact=true` }, "Ignores"));
+
 		if ("ignores_errors" in info) {
 			const errors = info.ignores_errors;
 			const mapper = ([pattern, error]) => `!ug ${ident} ${pattern}`;
