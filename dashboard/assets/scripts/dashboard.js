@@ -1766,8 +1766,7 @@ class ContextMenuRenderer {
 		// like the real context menu does.
 		this.makeGroup();
 		this.makeEntry(h("a", { href: url }, "Open link in new tab"));
-
-		this.makeGroup();
+		this.addItem(" ");
 		this.makeEntry(h("span", { onclick: this.makeCopyTextFn(url) }, "Copy link address"));
 
 		const igsets = this.getIgsets(ident, url);
