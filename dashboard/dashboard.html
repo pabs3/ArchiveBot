@@ -469,7 +469,22 @@ kbd {
 	user-select: none;
 }
 
-.context-menu-entry:hover,
+.context-menu-entry:hover {
+	text-decoration: none !important /* Don't underline links that open in new tabs */;
+	background-color: #4281F4 !important; /* Override highlighting current selection */
+	color: #fff !important;
+}
+
+// Partial workaround for old browsers without :has() selector
+// Only highlights related after the hover not before
+// FIXME: remove this workaround when Ryz upgrades
+.context-menu-entry:hover ~ .context-menu-related {
+	text-decoration: none !important /* Don't underline links that open in new tabs */;
+	background-color: #4281F4 !important; /* Override highlighting current selection */
+	color: #fff !important;
+}
+
+// FIXME: merge this into .context-menu-entry:hover when removing workaround
 .context-menu-group:has(.context-menu-entry:hover) .context-menu-related {
 	text-decoration: none !important /* Don't underline links that open in new tabs */;
 	background-color: #4281F4 !important; /* Override highlighting current selection */
