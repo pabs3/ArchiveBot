@@ -5,6 +5,7 @@ class Ignores < Webmachine::Resource
 
   def content_types_provided
     [
+      ['application/json', :to_json]
       ['text/plain', :to_text]
     ]
   end
