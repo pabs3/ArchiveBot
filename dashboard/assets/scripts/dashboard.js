@@ -2249,7 +2249,7 @@ class Dashboard {
 		const filterJobNote = args.filterJobNote ? Boolean(Number(args.filterJobNote)) : true;
 		const filterJobPipe = args.filterJobPipe ? Boolean(Number(args.filterJobPipe)) : true;
 		const filterJobNick = args.filterJobNick ? Boolean(Number(args.filterJobNick)) : true;
-		const filterCaseInsensitive = args.filterCaseInsensitive ? Boolean(Number(args.filterCaseInsensitive)) : true;
+		const filterCaseInsensitive = args.filterCaseInsensitive ? Boolean(Number(args.filterCaseInsensitive)) : true; // FIXME: remove this parameter as it is a compat for old browsers without ?(?-i)
 		const showAllHeaders = args.initialFilter && args.showAllHeaders ? Boolean(Number(args.showAllHeaders)) : true;
 		const showQueuedJobs = args.showQueuedJobs ? Boolean(Number(args.showQueuedJobs)) : true;
 		const showRunningJobs = args.showRunningJobs ? Boolean(Number(args.showRunningJobs)) : true;
