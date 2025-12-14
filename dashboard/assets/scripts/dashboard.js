@@ -1613,7 +1613,6 @@ class ContextMenuRenderer {
 		const hostname_url = new URL('http://example.com/');
 		hostname_url.protocol = original_url.protocol;
 		hostname_url.hostname = original_url.hostname;
-		this.makeCopyEntries(null, [`!status ${hostname_url.href}`]);
 
 		const finished = byId("crawls-finished");
 		const finished_url = new URL(finished.href);
@@ -1625,10 +1624,16 @@ class ContextMenuRenderer {
 
 		this.makeGroup();
 		this.makeEntry(h("a", { href: finished_url.href }, "Finished"));
-		this.addItem(" or ");
+		this.addItem(", ");
 		this.makeEntry(h("a", { href: viewer_url.href }, "Viewer"));
+		this.addItem(" or copy ");
+		this.makeCopyEntries(
+			null,
+			[['!status', `!status ${hostname_url.href}`]],
+			{ group: false, before: "", after: " "}
+		);
 		this.addItem(" for ");
-		this.makeEntry(h("a", { href: hostname_url.href }, domain));
+		this.menuRelated(this.makeEntry(h("a", { href: hostname_url.href }, domain)));
 	}
 
 	replaceIdent(str, ident) {
