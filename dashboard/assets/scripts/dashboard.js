@@ -1071,6 +1071,7 @@ class JobsRenderer {
 				const parts = logSegment.lastChild.textContent.split(url);
 				parts.splice(1, 0, link);
 				logSegment.lastChild.replaceChildren(...parts);
+				logSegment.lastChild.className = "line-error";
 			}
 
 			let status = new JobStatus(info.statsElements.jobInfo.classList);
