@@ -1559,33 +1559,33 @@ class ContextMenuRenderer {
 		];
 	}
 
-	addItem(item) {
-		appendAny(this.group ?? this.element, item);
+	addItem(element) {
+		appendAny(this.group ?? this.element, element);
 	}
 
-	menuRelated(entry) {
-		entry.classList.add("context-menu-related");
+	menuRelated(element) {
+		element.classList.add("context-menu-related");
 	}
 
-	makeRelated(entry) {
-		if (typeof entry === "string") {
-			entry = h("span", null, entry);
+	makeRelated(element) {
+		if (typeof element === "string") {
+			element = h("span", null, element);
 		}
-		this.menuRelated(entry);
-		this.addItem(entry);
+		this.menuRelated(element);
+		this.addItem(element);
 	}
 
-	menuEntry(entry) {
-		entry.classList.add("context-menu-entry");
+	menuEntry(element) {
+		element.classList.add("context-menu-entry");
 	}
 
-	makeEntry(entry) {
-		this.menuEntry(entry);
-		this.addItem(entry);
+	makeEntry(element) {
+		this.menuEntry(element);
+		this.addItem(element);
 	}
 
-	menuGroup(group) {
-		group.classList.add("context-menu-group");
+	menuGroup(element) {
+		element.classList.add("context-menu-group");
 	}
 
 	makeGroup(insert = null) {
