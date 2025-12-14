@@ -548,7 +548,7 @@ class JobsRenderer {
 					"deleteContentBackward",
 			];
 			let ms = e && e.inputType && repeats.includes(e.inputType) ? 100 : 0;
-			ms = !this.filterBox.value ? 0 : ms;
+			ms = !e && !this.filterBox.value ? 0 : ms;
 			clearTimeout(this.filterTimeout);
 			this.filterTimeout = setTimeout(() => {
 				clearTimeout(this.filterTimeout);
