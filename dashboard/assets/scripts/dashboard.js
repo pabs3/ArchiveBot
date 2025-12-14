@@ -1561,10 +1561,12 @@ class ContextMenuRenderer {
 
 	addItem(element) {
 		appendAny(this.group ?? this.element, element);
+		return element;
 	}
 
 	menuRelated(element) {
 		element.classList.add("context-menu-related");
+		return element;
 	}
 
 	makeRelated(element) {
@@ -1573,19 +1575,23 @@ class ContextMenuRenderer {
 		}
 		this.menuRelated(element);
 		this.addItem(element);
+		return element;
 	}
 
 	menuEntry(element) {
 		element.classList.add("context-menu-entry");
+		return element;
 	}
 
 	makeEntry(element) {
 		this.menuEntry(element);
 		this.addItem(element);
+		return element;
 	}
 
 	menuGroup(element) {
 		element.classList.add("context-menu-group");
+		return element;
 	}
 
 	makeGroup(insert = null) {
@@ -1596,6 +1602,7 @@ class ContextMenuRenderer {
 		} else {
 			insert.after(this.group);
 		}
+		return this.group;
 	}
 
 	makePathStatusCommands(url) {
