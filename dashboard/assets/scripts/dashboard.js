@@ -968,6 +968,7 @@ class JobsRenderer {
 			attrs = Reusable.obj_className_line_normal;
 		}
 
+		let retry = "";
 		if (
 			data.response_code != null && (
 				(data.response_code === 0 && wgetCodesRetried.test(data.wget_code)) ||
@@ -978,7 +979,7 @@ class JobsRenderer {
 				)
 			)
 		) {
-			attrs = { className: `${attrs.className} line-retry` };
+			retry = " url-retry";
 		}
 
 		const url = data.url;
@@ -994,7 +995,7 @@ class JobsRenderer {
 			h("div", attrs, [
 				response,
 				` ${data.wget_code} `,
-				h("a", { href: url, className: "log-url" }, url)
+				h("a", { href: url, className: `log-url${retry}` }, url)
 			]),
 		);
 
