@@ -957,12 +957,14 @@ class JobsRenderer {
 	}
 
 	_renderDownloadLine(data, logSegment) {
+		const code = data.response_code;
+
 		let attrs;
 		if (data.is_warning) {
 			attrs = Reusable.obj_className_line_warning;
 		} else if (data.is_error) {
 			attrs = Reusable.obj_className_line_error;
-		} else if (data.response_code && data.response_code >= 300 && data.response_code < 400) {
+		} else if (data.response_code && code >= 300 && code < 400) {
 			attrs = Reusable.obj_className_line_redirect;
 		} else {
 			attrs = Reusable.obj_className_line_normal;
@@ -970,12 +972,13 @@ class JobsRenderer {
 
 		let retry = "";
 		if (
-			data.response_code != null && (
-				(data.response_code === 0 && wgetCodesRetried.test(data.wget_code)) ||
+			code != null && (
 				(
-					data.response_code > 0 &&
-					(data.response_code < 300 || data.response_code >= 400) &&
-					![200, 204, 206, 304, 401, 403, 404, 405, 410].includes(data.response_code)
+					(code === 0 || (code >= 300 && code < 400)) &&
+					wgetCodesRetried.test(data.wget_code)
+				) || (
+					code > 0 && (code < 300 || code >= 400) &&
+					![200, 204, 206, 304, 401, 403, 404, 405, 410].includes(code)
 				)
 			)
 		) {
