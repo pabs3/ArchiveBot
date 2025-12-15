@@ -2001,6 +2001,39 @@ class ContextMenuRenderer {
 		this.show(ev);
 	}
 
+	async jobRemoveIgnoresMenu(ev, target, ident) {
+		const url = `//archivebot.com/ignores/${ident}`;
+		await fetch(url)
+		.then((res) => {
+			return res.ok ? res : Promise.reject(res);
+		})
+		.then((res) => {
+			this.prepare();
+			this.makeGroup();
+			this.addItem(`Loading ignores for ${ident}`)
+			return res;
+		})
+		.then((res) => res.text())
+		.then((text) => text.trim().split('\n'))
+		.then((lines) => lines.map((line) => line.split('\t')))
+		.then((ignores) => ignores.map(([id, ig]) => `!ug ${id} ${ig}`))
+		.then((cmds) => this.makeCopyEntries(ident, cmds))
+		.finally(() => {
+			this.element.firstChild.nextSibling.remove()
+			this.show(ev);
+		})
+		.catch((res) => {
+			const error = res instanceof Error ? res : `HTTP ${res.status} ${res.statusText}`;
+			this.prepare();
+			this.makeGroup();
+			this.addItem(url);
+			this.makeGroup();
+			this.addItem(`Download error: ${error}`);
+			this.show(ev);
+		})
+
+	}
+
 	jobIgnoresMenu(ev, target) {
 		this.prepare();
 
@@ -2022,6 +2055,9 @@ class ContextMenuRenderer {
 
 		this.makeGroup();
 		this.makeEntry(h("a", { href: `//archivebot.com/ignores/${ident}?compact=true` }, "View ignores"));
+
+		this.makeGroup();
+		this.makeEntry(h("span", { onclick: () => this.jobRemoveIgnoresMenu(ev, target, ident) }, "Remove ignores"))
 
 		this.show(ev);
 	}
