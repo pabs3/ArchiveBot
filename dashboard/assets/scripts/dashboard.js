@@ -2073,6 +2073,9 @@ class ContextMenuRenderer {
 		const pipelineNick = jr.pipelines[pipelineId];
 
 		this.makeGroup();
+		this.makeEntry(h("a", { href: `//archivebot.com/pipelines?initialFilter=${jobData.pipeline_id}` }, `Status for ${pipelineNick}`));
+
+		this.makeGroup();
 		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(pipelineNick)) } }, `Filter by ${pipelineNick}`));
 
 		this.makeGroup();
