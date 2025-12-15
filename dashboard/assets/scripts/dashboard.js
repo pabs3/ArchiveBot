@@ -2010,9 +2010,6 @@ class ContextMenuRenderer {
 
 		this.makeCopyEntries(ident, [`!${igon} ${ident}`]);
 
-		this.makeGroup();
-		this.makeEntry(h("a", { href: `//archivebot.com/ignores/${ident}?compact=true` }, "Ignores"));
-
 		if ("ignores_errors" in info) {
 			const errors = info.ignores_errors;
 			const mapper = ([pattern, error]) => `!ug ${ident} ${pattern}`;
@@ -2022,6 +2019,9 @@ class ContextMenuRenderer {
 			this.makeCopyEntries(ident, cmds);
 			info.statsElements.ignores.classList.remove('job-ignores-error');
 		}
+
+		this.makeGroup();
+		this.makeEntry(h("a", { href: `//archivebot.com/ignores/${ident}?compact=true` }, "View ignores"));
 
 		this.show(ev);
 	}
