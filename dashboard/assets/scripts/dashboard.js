@@ -1558,9 +1558,9 @@ class ContextMenuRenderer {
 			return `!ig ${ident} ^${reSchema}://${regExpEscape(domain + p)}`;
 		}));
 
-		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(www\.)?${regExpEscape((domain + "").removePrefix("www."))}/`);
-		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://([^/]*[@.])?${regExpEscape((domain + "").removePrefix("www."))}\.?(:\d+)?/`);
-		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(?!([^/]*[@.])?${regExpEscape((domain + "").removePrefix("www."))}\.?(:\d+)?/)`);
+		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(www\\.)?${regExpEscape((domain + "").removePrefix("www."))}/`);
+		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://([^/]*[@.])?${regExpEscape((domain + "").removePrefix("www."))}\\.?(:\\d+)?/`);
+		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(?!([^/]*[@.])?${regExpEscape((domain + "").removePrefix("www."))}\\.?(:\\d+)?/)`);
 
 		return [
 			ignoreCommands,
