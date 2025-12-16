@@ -521,7 +521,7 @@ const lineInvalidPattern = /^Pattern (.*) is invalid \(error: (.*)\)\.  Ignored\
 const lineERRORFetching = /^ERROR Fetching ‘([^’]+)’ encountered an error: (.*)$/;
 const lineSettingsUpdated = /^Settings updated: +(\d+) workers, (\d+) ignores, delay min\/max: \[(\d+), (\d+)\] ms(, suppressing ignore reports)$/;
 
-const lineFatal = /^CRITICAL (?:Sorry|Please report)|^ERROR Fatal exception\.$|^Traceback \(most recent call last\):$|No space left on device|^Fatal Python error:|^(?:Thread|Current thread) 0x/;
+const lineFatal = /^CRITICAL (?:Sorry|Please report)|^ERROR Fatal exception\.$|^Traceback \(most recent call last\):$|No space left on device|^Fatal Python error:|^(?:Thread|Current thread) 0x|^Exception raised in /;
 const lineAbortedItem = /Script requested immediate stop|^Adjusted target WARC path to.*-aborted$/;
 const lineZeroBytes = /^ *0 bytes\.$/;
 const lineSomeBytes = /^ *([1-9][0-9]*) bytes\.$/
