@@ -1735,9 +1735,12 @@ class ContextMenuRenderer {
 			["1s", `!d ${ident} 1000 1000`],
 			["2s", `!d ${ident} 2000 2000`],
 			["5s", `!d ${ident} 5000 5000`],
+			["30s", `!d ${ident} 30000 30000`],
 			["1min", `!d ${ident} 60000 60000`],
 			["3min", `!d ${ident} 180000 180000`],
+			["5min", `!d ${ident} 300000 300000`],
 			["1hr", `!d ${ident} 3600000 3600000`],
+			["2hr", `!d ${ident} 7200000 7200000`],
 		], { group: false, before: "", after: " "});
 	}
 
