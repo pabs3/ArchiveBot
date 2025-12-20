@@ -1441,6 +1441,22 @@ const igsetMap = {
 	reddit: "reddit.com redd.it",
 	singletumblr: "tumblr",
 }
+
+const igsetUnofficial = (String.raw`
+	^https?://www\.((instagram|facebook|threads|meta)\.com|meta\.ai)/.*\.pkg[,.](js|css)($|/)
+	^https?://{primary_netloc}/((.*/)?productPage_USD_productPage_USD|(.*/)?h_\d+/(.*/)?h_\d+(/|$)|.*/.*\.(jpg|jpeg|svg|png|json|txt|xml|text|gif|pdf|mp4)$|.*\.(css|js|json)$|.*/wix-thunderbolt/)
+	^https?://{primary_netloc}/.*[?&]prefv\d*=[^&]+(%7C|\|)
+	^https?://{primary_netloc}/[^?]*\?.*&amp;
+	^https?://(www|[a-z]{2})\.pinterest\.com/.*\.js$
+	^https?://(www\.)?flickr\.com/(.*\?giftPro|photos/[^/]+/(\d+/with/\d+/|.*(\.js|/likelySubtags\.json)))$
+	^https?://{primary_netloc}/.*/(udata\.vst|current\.cmp|current\.src|current_add\.ep|gtm\.js)/?$
+	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/(h_\d+|w_\d+|c_fill|c_limit|fl_progressive:steep|f_webp|f_auto|q_auto:good)$
+	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/g_auto/https%3A%2F%2Fsubstack\.com%2Fimg%2Favatars%2Flogged-out\.png$
+	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/https%3A%2F%2F[^%]+\.s3\.amazonaws\.com%2Fpublic%2Fimages%2F
+	^https?://({primary_netloc}|substack\.com)/(sign-in|subscribe)
+	^https?://{primary_netloc}/confluence/s/.*/download/(context)?batch/[^/]+/[^/]+/
+`).split("\n").map(re => re.trim()).filter((re) => re.length);
+
 /**
  * This context menu pops up when you right-click in some places
  * in the window, helping you copy different ArchiveBot commands
@@ -1768,7 +1784,7 @@ class ContextMenuRenderer {
 		return `[${ignoresRemaining.length} more path ignore suggestions]`;
 	}
 
-	makeUrlPathEntries(ident, url, igon, maxSuggestedIgnores) {
+	makeUrlPathEntries(ident, jobData, url, igon, maxSuggestedIgnores) {
 		const start = ident.substring(0, 3);
 
 		// Unfortunately, this does not open it in a background tab
@@ -1791,6 +1807,12 @@ class ContextMenuRenderer {
 				this.makeCopyEntries(ident, [`!igset ${ident} ${igsets[0]}`]);
 			}
 		}
+
+		const ignoresUnofficial = igsetUnofficial.map((re) => re
+			.replace('{primary_url}', regExpEscape(jobData.url))
+			.replace('{primary_netloc}', regExpEscape((new URL(jobData.url)).host))
+		).filter((re) => (new RegExp(re)).test(url)).map((re) => `!ig ${ident} ${re}`);
+		this.makeCopyEntries(ident, ignoresUnofficial);
 
 		let [ignoreCommands, ignoreCommandsPath] = this.getPathIgnoreCommands(ident, url, maxSuggestedIgnores);
 		this.makeCopyEntries(ident, ignoreCommands);
