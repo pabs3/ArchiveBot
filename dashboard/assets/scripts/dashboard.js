@@ -1896,7 +1896,7 @@ class ContextMenuRenderer {
 			this.makeCopyEntries(ident, [`!ug ${ident} ${pattern}`]);
 		}
 		if (url) {
-			this.makeUrlPathEntries(ident, url, igon, maxSuggestedIgnores);
+			this.makeUrlPathEntries(ident, jobData, url, igon, maxSuggestedIgnores);
 		}
 
 		this.makeAlwaysEntries(ident, igon, note);
