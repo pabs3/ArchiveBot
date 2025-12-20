@@ -177,6 +177,10 @@ function replaceFnArgs(args) {
 	return [groups, offset, string, namedGroups];
 }
 
+function len_re(match) {
+	return match.length > 1 ? `{${match.length}}` : "";
+}
+
 const regExpsGenericise = {
 	gitobject: ["/objects/[0-9a-fA-F]{2}/[0-9a-fA-F]{38}"],
 	baddate: [String.raw`([013-9]\d{3}|20[3-9]\d|2[1-9]\d\d)(-\d\d){2}`], // FIXME: figure out how to auto-adjust
@@ -186,11 +190,11 @@ const regExpsGenericise = {
 	sha1: ["[0-9a-fA-F]{40}"],
 	hex: [
 			"0[xX][0-9a-fA-F]*[a-fA-F]+[0-9a-fA-F]*",
-			(match) => `0[xX][a-fA-F0-9]{${match.length}}`,
+			(match) => `0[xX][a-fA-F0-9]` + len_re(match),
 		],
 	digits: [
-		"\\d+",
-		(match) => `\\d{${match.length}}`,
+		String.raw`\d+`,
+		(match) => String.raw`\d` + len_re(match),
 	],
 }
 
