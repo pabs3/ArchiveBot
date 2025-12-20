@@ -533,7 +533,7 @@ const lineStartingItem = /^(?:Starting|Finished) (StartHeartbeat|SetFetchDepth|P
 const lineDownloadItem = /^Starting (DownloadUrlFile|WgetDownload) for Item *$/
 const lineQueuedItem = /^Queued (.*) as item ([0-9a-z]{23,}) to (pending:.*)\.$/;
 
-const wgetCodesRetried = /^(?:Connect|Readline) timed out\.$|^Connection closed\.|^\[Errno 1\] Operation not permitted|^DNS resolution error: All nameservers failed to answer the query .*\. IN (?:A|AAAA): Server 127\.0\.0\.1 UDP port 53 answered SERVFAIL$|^Invalid redirect location\.$|^Connect network error: $|^\[Errno 104\] Connection reset by peer$|^\[Errno 113\] No route to host$/;
+const wgetCodesRetried = /^(?:Connect|Readline) timed out\.$|^Connection closed\.|^\[Errno 1\] Operation not permitted|^DNS resolution error: All nameservers failed to answer the query .*\. IN (?:A|AAAA): Server 127\.0\.0\.1 UDP port 53 answered SERVFAIL$|^Invalid redirect location\.$|^Connect network error: $|^\[Errno 104\] Connection reset by peer$|^\[Errno 113\] No route to host$|^Too many redirects\.$/;
 
 class JobsRenderer {
 	constructor(container, filterBox, historyLines, showNicks, showPipelines, contextMenuRenderer) {
