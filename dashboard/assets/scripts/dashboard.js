@@ -179,7 +179,7 @@ function replaceFnArgs(args) {
 
 const regExpsGenericise = {
 	gitobject: ["/objects/[0-9a-fA-F]{2}/[0-9a-fA-F]{38}"],
-	baddate: ["(1\\d{3}|20[3-9]\\d|2[1-9]\\d\\d)(-\\d\\d){2}"], // FIXME: figure out how to auto-adjust
+	baddate: [String.raw`([013-9]\d{3}|20[3-9]\d|2[1-9]\d\d)(-\d\d){2}`], // FIXME: figure out how to auto-adjust
 	uuid: ["[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"],
 	sha512: ["[0-9a-fA-F]{128}"],
 	sha256: ["[0-9a-fA-F]{64}"],
