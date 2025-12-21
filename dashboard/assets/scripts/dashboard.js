@@ -1545,42 +1545,56 @@ class ContextMenuRenderer {
 		// For testing a URL with enough path segments to cause [N more ignore suggestions]
 		// url = "https://example.com/asset/620787/liveblog/api/cms/modules/cms/modules/cms/modules/cms/modules/cms/modules/cms/modules/";
 		const schema = url.split(":")[0];
-		const domain = url.split("/")[2].split(":");
+		const [domain, port] = url.split("/")[2].split(":");
 		const [withoutQuery, query] = url.split("?", 2);
 		const path = `/${split(withoutQuery, "/", 3)[3]}`;
 		const reSchema = schema.startsWith("http") ? "https?" : "ftp";
 		const pathVariants = this.getPathVariants(path);
+		const netloc = (port === undefined ? domain : `${domain}:${port}`);
+		const domain_re = regExpEscape(domain);
+		const netloc_re = regExpEscape(netloc);
+		const path_re = regExpEscape(path);
+		const port_g = (port === undefined ? "" : String.raw`(:\d+)?`);
+		const nwdom = domain.removePrefix("www.");
+		const nwdom_re = regExpEscape(nwdom);
+		const netloc_g = String.raw`${nwdom_re}\.?${port_g}`;
 
 		let ignoreCommands = [];
 		if (query) {
-			const queryGeneral = regExpEscape(query).replace(regExpGenericiseRe, regExpGenericiser);
-			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/[^?]*\\?${queryGeneral}$`);
-			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?")}${queryGeneral}$`);
-			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?" + query)}$`);
-			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path + "?")}`);
+			const query_re = regExpEscape(query);
+			const query_g = query_re.replace(regExpGenericiseRe, regExpGenericiser);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}/[^?]*\?${query_g}$`);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?${query_g}$`);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?{query_re}$`);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?`);
 		} else {
 			const pathSplit = path.split("/");
 			if (pathSplit.at(-1) === "") {
 				pathSplit.splice(-2, 2, `${pathSplit.at(-2)}/`);
 			}
-			const pathGeneral = regExpEscape(path).replace(regExpGenericiseRe, regExpGenericiser);
-			const pathLastGeneral = regExpEscape(pathSplit.at(-1)).replace(regExpGenericiseRe, regExpGenericiser);
-			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/.*/${pathLastGeneral}$`);
-			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}/.*/${regExpEscape(pathSplit.at(-1))}$`);
-			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain)}${pathGeneral}$`);
-			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${regExpEscape(domain + path)}$`);
+			const path_g = path_re.replace(regExpGenericiseRe, regExpGenericiser);
+			const pathLast = pathSplit.at(-1);
+			const pathLast_re = regExpEscape(pathLast);
+			const pathLast_g = pathLast_re.replace(regExpGenericiseRe, regExpGenericiser);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}/.*/${pathLast_g}$`);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}/.*/${pathLast_re}$`);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_g}$`);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}$`);
 		}
 		// Remove duplicates in an order-preserving way
 		ignoreCommands = Array.from(new Map(ignoreCommands.map((i) => [i, 1])).keys());
 
 		let ignoreCommandsPath = [];
 		ignoreCommandsPath.push(...pathVariants.map((p) => {
-			return `!ig ${ident} ^${reSchema}://${regExpEscape(domain + p)}`;
+			return String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${regExpEscape(p)}`;
 		}));
 
-		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(www\\.)?${regExpEscape((domain + "").removePrefix("www."))}/`);
-		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://([^/]*[@.])?${regExpEscape((domain + "").removePrefix("www."))}\\.?(:\\d+)?/`);
-		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(?!([^/]*[@.])?${regExpEscape((domain + "").removePrefix("www."))}\\.?(:\\d+)?/)`);
+		if (port !== undefined) {
+			ignoreCommandsPath.push(String.raw`!ig ${ident} ^${reSchema}://${domain_re}${port_g}/`);
+		}
+		ignoreCommandsPath.push(String.raw`!ig ${ident} ^${reSchema}://(www\.)?${netloc_g}/`);
+		ignoreCommandsPath.push(String.raw`!ig ${ident} ^${reSchema}://([^/]*[@.])?${netloc_g}/`);
+		ignoreCommandsPath.push(String.raw`!ig ${ident} ^${reSchema}://(?!([^/]*[@.])?${netloc_g}/)`);
 
 		return [
 			ignoreCommands,
