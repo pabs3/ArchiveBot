@@ -1565,7 +1565,7 @@ class ContextMenuRenderer {
 			const query_g = query_re.replace(regExpGenericiseRe, regExpGenericiser);
 			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}/[^?]*\?${query_g}$`);
 			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?${query_g}$`);
-			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?{query_re}$`);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?${query_re}$`);
 			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?`);
 		} else {
 			const pathSplit = path.split("/");
@@ -1576,25 +1576,25 @@ class ContextMenuRenderer {
 			const pathLast = pathSplit.at(-1);
 			const pathLast_re = regExpEscape(pathLast);
 			const pathLast_g = pathLast_re.replace(regExpGenericiseRe, regExpGenericiser);
-			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}/.*/${pathLast_g}$`);
-			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}/.*/${pathLast_re}$`);
-			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_g}$`);
-			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${netloc_re}/.*/${pathLast_g}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${netloc_re}/.*/${pathLast_re}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${netloc_re}${path_g}$`);
+			ignoreCommands.push(`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}$`);
 		}
 		// Remove duplicates in an order-preserving way
 		ignoreCommands = Array.from(new Map(ignoreCommands.map((i) => [i, 1])).keys());
 
 		let ignoreCommandsPath = [];
 		ignoreCommandsPath.push(...pathVariants.map((p) => {
-			return String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${regExpEscape(p)}`;
+			return `!ig ${ident} ^${reSchema}://${netloc_re}${regExpEscape(p)}`;
 		}));
 
 		if (port !== undefined) {
-			ignoreCommandsPath.push(String.raw`!ig ${ident} ^${reSchema}://${domain_re}${port_g}/`);
+			ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://${domain_re}${port_g}/`);
 		}
-		ignoreCommandsPath.push(String.raw`!ig ${ident} ^${reSchema}://(www\.)?${netloc_g}/`);
-		ignoreCommandsPath.push(String.raw`!ig ${ident} ^${reSchema}://([^/]*[@.])?${netloc_g}/`);
-		ignoreCommandsPath.push(String.raw`!ig ${ident} ^${reSchema}://(?!([^/]*[@.])?${netloc_g}/)`);
+		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(www\.)?${netloc_g}/`);
+		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://([^/]*[@.])?${netloc_g}/`);
+		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(?!([^/]*[@.])?${netloc_g}/)`);
 
 		return [
 			ignoreCommands,
