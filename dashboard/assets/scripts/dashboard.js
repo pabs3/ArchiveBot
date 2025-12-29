@@ -675,7 +675,7 @@ class JobsRenderer {
 					className: "job-history-summary",
 					ariaDisabled: "true",
 					onclick: (ev) => {
-						if (this.ariaDisabled === "true" || ev.target !== ev.currentTarget) {
+						if (ev.currentTarget.ariaDisabled === "true" || ev.target !== ev.currentTarget) {
 							// Ignore click events when no history or for child elements
 							return false;
 						}
@@ -1000,7 +1000,7 @@ class JobsRenderer {
 
 		// Enable job history and add the historical job header to the list
 		const summary = byId(`log-container-${jobData.ident}`).querySelector(".job-history-summary");
-		summary.removeAttribute("aria-disabled");
+		summary.ariaDisabled = "false";
 		summary.after(jobHeader);
 
 	}
