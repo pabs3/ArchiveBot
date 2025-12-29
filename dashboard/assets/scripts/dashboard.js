@@ -2015,8 +2015,7 @@ class ContextMenuRenderer {
 		const jobUrl = jobData.url;
 		const jobNote = jobData.note;
 
-		this.makeGroup();
-		this.makeEntry(h("span", { onclick: this.makeCopyTextFn(jobUrl) }, "Copy link address"));
+		this.makeUrlEntries(jobUrl);
 
 		this.makeGroup();
 		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(jobUrl)) } }, `Filter by ${jobUrl}`));
