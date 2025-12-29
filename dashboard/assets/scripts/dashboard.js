@@ -2133,7 +2133,8 @@ class ContextMenuRenderer {
 		this.prepare();
 
 		const [logContainer, ident] = this.getLogContainer(target);
-		const info = ds.jobsRenderer.renderInfo[ident];
+		const jr = ds.jobsRenderer;
+		const info = jr.renderInfo[ident];
 		const igon = target.textContent === "igon" ? "igoff" : "igon";
 
 		this.makeCopyEntries(ident, [`!${igon} ${ident}`]);
