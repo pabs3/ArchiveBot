@@ -1889,10 +1889,10 @@ class ContextMenuRenderer {
 			}
 		}
 
-		const ignoresUnofficial = igsetUnofficial.map((re) => re
+		const ignoresUnofficial = igsetUnofficial.filter((re) => (new RegExp(re
 			.replace('{primary_url}', regExpEscape(jobData.url))
 			.replace('{primary_netloc}', regExpEscape((new URL(jobData.url)).host))
-		).filter((re) => (new RegExp(re)).test(url)).map((re) => `!ig ${ident} ${re}`);
+		)).test(url)).map((re) => `!ig ${ident} ${re}`);
 		this.makeCopyEntries(ident, ignoresUnofficial);
 
 		let [ignoreCommands, ignoreCommandsPath] = this.getPathIgnoreCommands(ident, url, maxSuggestedIgnores);
