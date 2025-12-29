@@ -2207,14 +2207,16 @@ class ContextMenuRenderer {
 			return;
 		}
 
-		// If the bottom of the context menu is outside the viewport, move the context
-		// menu up, so that it appears to have opened from its bottom-left corner.
-		// + 1 pixel so that the pointer lands inside the element and turns on cursor: default
+		// If the context menu is outside the viewport, keep it inside instead
 		if (ev.clientY + this.element.offsetHeight > document.documentElement.clientHeight) {
 			let top = ev.clientY - this.element.offsetHeight + 1;
-			// Keep the top of the context menu inside the viewport too.
 			if (top < 0) top = 0;
 			this.element.style.top = `${top}px`;
+		}
+		if (ev.clientX + this.element.offsetWidth > document.documentElement.clientWidth) {
+			let left = ev.clientX - this.element.offsetWidth + 1;
+			if (left < 0) left = 0;
+			this.element.style.left = `${left}px`;
 		}
 	}
 
