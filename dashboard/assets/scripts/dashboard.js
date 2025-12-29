@@ -2183,6 +2183,31 @@ class ContextMenuRenderer {
 		this.show(ev);
 	}
 
+	jobIdentMenu(ev, target) {
+		this.prepare();
+
+		const [logContainer, ident] = this.getLogContainer(target);
+		const jr = ds.jobsRenderer;
+		const jt = jr.jobs;
+		const info = jr.renderInfo[ident];
+		const jobData = jt.sorted.find((el) => el.ident === ident);
+		const igon = jobData.suppress_ignore_reports ? "igon" : "igoff";
+		const note = jobData.note ?? "";
+		const status = (new JobStatus(info.statsElements.jobInfo.classList)).get();
+
+		this.makeGroup();
+		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(ident)) } }, `Filter by ${ident}`));
+
+		if (["fatal", "aborted", "failed", "done"].includes(status)) {
+			this.makeGroup();
+			this.makeEntry(h("span", { onclick: () => { logContainer.remove(); jt.removeJob(ident); } }, `Remove job ${ident}`));
+		}
+
+		this.makeAlwaysEntries(ident, igon, note);
+
+		this.show(ev);
+	}
+
 	onContextMenu(ev) {
 		if (ev.target.classList.contains("job-type")) {
 			this.jobCommandMenu(ev, ev.target);
@@ -2204,6 +2229,8 @@ class ContextMenuRenderer {
 			this.jobIgnoresMenu(ev, ev.target);
 		} else if (ev.target.classList.contains("job-pipeline")) {
 			this.jobPipelineMenu(ev, ev.target);
+		} else if (ev.target.classList.contains("job-ident")) {
+			this.jobIdentMenu(ev, ev.target);
 		} else if (ContextMenuRenderer.#log_classes.filter(c => ev.target.classList.contains(c)).length) {
 			this.logWindowMenu(ev, ev.target);
 		} else {
