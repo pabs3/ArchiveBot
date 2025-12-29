@@ -919,10 +919,10 @@ class JobsRenderer {
 						!ev.currentTarget.getBoundingClientRect().contains(ev.clientX, ev.clientY)
 					) {
 						const [logContainer, ident] = getParentByPrefix(ev.currentTarget, "id", "log-container-");
-						logContainer.remove();
-
 						const jr = ds.jobsRenderer;
 						const jt = jr.jobs;
+
+						logContainer.remove();
 						jt.removeJob(ident);
 
 						ev.stopPropagation();
