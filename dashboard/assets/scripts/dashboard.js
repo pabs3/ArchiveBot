@@ -1615,9 +1615,13 @@ class ContextMenuRenderer {
 		if (query) {
 			const query_re = regExpEscape(query);
 			const query_g = query_re.replace(regExpGenericiseRe, regExpGenericiser);
+			const queryFirst = query.split("=")[0];
+			const queryFirst_re = regExpEscape(queryFirst);
+			const queryFirst_g = `${queryFirst_re}=`;
 			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}/[^?]*\?${query_g}$`);
 			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?${query_g}$`);
 			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?${query_re}$`);
+			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?${queryFirst_g}`);
 			ignoreCommands.push(String.raw`!ig ${ident} ^${reSchema}://${netloc_re}${path_re}\?`);
 		} else {
 			const pathSplit = path.split("/");
