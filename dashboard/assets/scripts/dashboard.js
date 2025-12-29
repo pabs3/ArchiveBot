@@ -1857,15 +1857,19 @@ class ContextMenuRenderer {
 		return `[${ignoresRemaining.length} more path ignore suggestions]`;
 	}
 
-	makeUrlPathEntries(ident, jobData, url, igon, maxSuggestedIgnores) {
-		const start = ident.substring(0, 3);
-
+	makeUrlEntries(url) {
+		this.makeGroup();
 		// Unfortunately, this does not open it in a background tab
 		// like the real context menu does.
-		this.makeGroup();
 		this.makeEntry(h("a", { href: url }, "Open link in new tab"));
 		this.addItem(" ");
 		this.makeEntry(h("span", { onclick: this.makeCopyTextFn(url) }, "Copy link address"));
+	}
+
+	makeUrlPathEntries(ident, jobData, url, igon, maxSuggestedIgnores) {
+		const start = ident.substring(0, 3);
+
+		this.makeUrlEntries(url);
 
 		const igsets = this.getIgsets(ident, url);
 		if (igsets.length) {
