@@ -23,6 +23,10 @@ HTMLAnchorElement.prototype.deleteSearchParam = function (key, value) {
 	this.search = search;
 }
 
+DOMRect.prototype.contains = function (x, y) {
+	return x >= this.left && x < this.right && y >= this.top && y < this.bottom;
+}
+
 function assert(condition, message) {
 	if (!condition) {
 		throw message || "Assertion failed";
@@ -255,6 +259,13 @@ function removeFromArray(arr, item) {
 	}
 }
 
+function removeObjFromArray(arr, sel) {
+	const idx = arr.findIndex(sel);
+	if (idx !== -1) {
+		arr.splice(idx, 1);
+	}
+}
+
 /*** End of utility code ***/
 
 // FIXME: update the backend instead
@@ -423,6 +434,15 @@ class JobsTracker {
 
 	hasFatalException(ident) {
 		return ident in this.fatalExceptionSet;
+	}
+
+	removeJob(ident) {
+		delete this.known[ident];
+		removeObjFromArray(this.sorted, (el) => el.ident === ident)
+		delete this.history[ident];
+		removeFromArray(this.finishedArray, ident);
+		delete this.finishedSet[ident];
+		delete this.fatalExceptionSet[ident];
 	}
 }
 
@@ -887,7 +907,32 @@ class JobsRenderer {
 		}
 		this.jobNoteUrlTitle(jobData, jobUrl);
 
-		const jobHeader = h("div", { className: "job-header" }, [statsElements.jobInfo, h("span", { className: "job-ident" }, ident)]);
+		const jobIdent = h(
+			"span",
+			{
+				className: "job-ident",
+				onclick: (ev) => {
+					// Only remove jobs when clicking the close button on ended jobs,
+					// which is outside the ident element and only visible on ended jobs.
+					if (
+						ev.currentTarget.dataset.close === "true" &&
+						!ev.currentTarget.getBoundingClientRect().contains(ev.clientX, ev.clientY)
+					) {
+						const [logContainer, ident] = getParentByPrefix(ev.currentTarget, "id", "log-container-");
+						logContainer.remove();
+
+						const jr = ds.jobsRenderer;
+						const jt = jr.jobs;
+						jt.removeJob(ident);
+
+						ev.stopPropagation();
+					}
+				},
+			},
+			ident,
+		);
+
+		const jobHeader = h("div", { className: "job-header" }, [statsElements.jobInfo, jobIdent]);
 
 		return [jobHeader, statsElements, jobType, jobUrl, jobNote];
 	}
@@ -1085,10 +1130,12 @@ class JobsRenderer {
 			}
 
 			let status = new JobStatus(info.statsElements.jobInfo.classList);
+			const jobIdent = info.logWindow.parentElement.querySelector(".job-ident");
 
 			if (lineFatal.test(line)) {
 				status.set("fatal");
 				this.jobs.markFatalException(ident);
+				jobIdent.dataset.close = "true";
 			} else if (
 				lineAbortedItem.test(line) ||
 				(
@@ -1097,9 +1144,11 @@ class JobsRenderer {
 				)
 			) {
 				status.set("aborted");
+				jobIdent.dataset.close = "true";
 			} else if (lineZeroBytes.test(line)) {
 				status.set("failed");
 				this.jobs.markFinished(ident);
+				jobIdent.dataset.close = "true";
 			} else if (
 				!["fatal", "aborted", "failed"].includes(status.get()) &&
 				(
@@ -1116,6 +1165,7 @@ class JobsRenderer {
 			) {
 				status.set("done");
 				this.jobs.markFinished(ident);
+				jobIdent.dataset.close = "true";
 			} else if (
 				lineReceivedItem.test(line) ||
 				lineDownloadItem.test(line) ||
@@ -1130,6 +1180,7 @@ class JobsRenderer {
 			) {
 				status.set("running");
 				this.jobs.markUnfinished(ident);
+				jobIdent.dataset.close = "false";
 			} else if (
 				lineQueuedItem.test(line) ||
 				(
@@ -1141,6 +1192,7 @@ class JobsRenderer {
 				)
 			) {
 				status.set("queued");
+				jobIdent.dataset.close = "false";
 			}
 
 			logSegment.lastChild.title += `, ${status.get()}`;

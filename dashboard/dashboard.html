@@ -279,11 +279,18 @@ html, body, .job-ident {
 	text-align: right;
 	font-family: monospace;
 	color: rgb(0 0 0 / 60%);
+	direction: rtl;
+	text-align: right;
+}
+
+.job-ident::marker {
+	cursor: pointer;
+}
+
+.job-ident[data-close="true"] {
 	display: list-item;
 	list-style-type: "🗙";
 	list-style-position: outside;
-	direction: rtl;
-	text-align: right;
 }
 
 .job-changes {
