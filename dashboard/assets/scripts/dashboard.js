@@ -2459,8 +2459,6 @@ class Dashboard {
 			this.contextMenuRenderer,
 		);
 
-		this.loadPipelines();
-
 		document.onkeypress = (ev) => this.keyPress(ev);
 
 		// Adjust help text based on URL
@@ -2501,6 +2499,7 @@ class Dashboard {
 		if (!showPipelines) {
 			addPageStyles(".job-pipeline-aligned { width: 0; }");
 		} else {
+			this.loadPipelines();
 			byId("filter-types").lastChild.after(
 				h("label", { title: "Pipeline" }, [
 					h("input", {
