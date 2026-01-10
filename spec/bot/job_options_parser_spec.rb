@@ -49,6 +49,10 @@ describe JobOptionsParser do
     expect(parser.parse('--delay=12')[:delay]).to eq(12)
   end
 
+  it 'parses --con=4 to an integer' do
+    expect(parser.parse('--con=4')[:concurrency]).to eq(4)
+  end
+
   it 'parses --concurrency=4 to an integer' do
     expect(parser.parse('--concurrency=4')[:concurrency]).to eq(4)
   end

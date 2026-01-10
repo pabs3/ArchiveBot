@@ -122,7 +122,7 @@ Accepted parameters
     alias for ``!concurrency``
     sets number of workers for job (use with care!)
 
-    Alias: ``--concurrent``
+    Aliases: ``--concurrent``, ``--con``
 
 ``--large``
     Job includes many large (>500MB) files. Job will be sent to
