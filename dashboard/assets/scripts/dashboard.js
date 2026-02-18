@@ -546,6 +546,7 @@ const lineERRORFetching = /^ERROR Fetching ‘([^’]+)’ encountered an error:
 const lineSettingsUpdated = /^Settings updated: +(\d+) workers, (\d+) ignores, delay min\/max: \[(\d+), (\d+)\] ms(, suppressing ignore reports)$/;
 
 const lineFatal = /^CRITICAL (?:Sorry|Please report)|^ERROR Fatal exception\.$|^Traceback \(most recent call last\):$|No space left on device|^Fatal Python error:|^(?:Thread|Current thread) 0x|^Exception raised in DownloadUrlFile: /;
+const lineUndoFatal = /^RuntimeError: Event loop is closed$/;
 const lineAbortedItem = /Script requested immediate stop|^Adjusted target WARC path to.*-aborted$/;
 const lineZeroBytes = /^ *0 bytes\.$/;
 const lineSomeBytes = /^ *([1-9][0-9]*) bytes\.$/
@@ -1136,6 +1137,13 @@ class JobsRenderer {
 				status.set("fatal");
 				this.jobs.markFatalException(ident);
 				jobIdent.dataset.close = "true";
+			} else if (
+				status.get() === "fatal" &&
+				lineUndoFatal.test(line)
+			) {
+				status.set("running");
+				this.jobs.markUnfinished(ident);
+				jobIdent.dataset.close = "false";
 			} else if (
 				lineAbortedItem.test(line) ||
 				(
