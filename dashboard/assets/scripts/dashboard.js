@@ -1835,8 +1835,6 @@ class ContextMenuRenderer {
 
 		// FIXME: make these dependent on the job status
 
-		this.makeCopyEntries(ident, [`!${igon} ${ident}`]);
-
 		this.makeAlwaysConcurrencyEntries(ident);
 
 		this.makeAlwaysDelayEntries(ident);
@@ -1844,6 +1842,7 @@ class ContextMenuRenderer {
 		this.makeGroup();
 		this.addItem("Copy ");
 		this.makeCopyEntries(ident, [
+			[`!${igon}`, `!${igon} ${ident}`],
 			["!status", `!status ${ident}`],
 			["!whereis", `!whereis ${ident}`],
 			["!expire", `!expire ${ident}`],
