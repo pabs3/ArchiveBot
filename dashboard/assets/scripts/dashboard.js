@@ -901,10 +901,12 @@ class JobsRenderer {
 
 		const jobUrl = statsElements.jobInfo.querySelector(".job-url");
 		jobUrl.dataset.url = jobUrl.textContent;
-		jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.archivete.am/").removePrefix("inline/");
-		if (jobUrl.dataset.url !== jobUrl.textContent) {
+		if (jobUrl.dataset.url.startsWith('https://transfer.archivete.am/')) {
+			jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.archivete.am/").removePrefix("inline/");
 			jobUrl.href = "https://transfer.archivete.am/inline/" + jobUrl.textContent;
 			jobUrl.textContent = jobUrl.textContent.split("/", 2)[1];
+		} else if (jobUrl.dataset.url.startsWith('https://nue2.nulldata.foo/gitlinks/')) {
+			jobUrl.textContent = jobUrl.textContent.removePrefix("https://nue2.nulldata.foo/gitlinks/");
 		}
 		this.jobNoteUrlTitle(jobData, jobUrl);
 
