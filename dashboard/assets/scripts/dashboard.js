@@ -1658,7 +1658,7 @@ class ContextMenuRenderer {
 		if (port !== undefined) {
 			ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://${domain_re}${port_g}/`);
 		}
-		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(www\.)?${netloc_g}/`);
+		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(www\\.)?${netloc_g}/`);
 		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://([^/]*[@.])?${netloc_g}/`);
 		ignoreCommandsPath.push(`!ig ${ident} ^${reSchema}://(?!([^/]*[@.])?${netloc_g}/)`);
 
