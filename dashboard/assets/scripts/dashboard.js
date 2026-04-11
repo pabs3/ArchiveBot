@@ -1732,6 +1732,8 @@ class ContextMenuRenderer {
 		viewer_url.searchParams.set("q", domain);
 
 		this.makeGroup();
+		this.makeEntry(h("span", { onclick: () => { ds.setFilter(regExpEscape(hostname_url.href)) } }, `Filter by`));
+		this.addItem(", ");
 		this.makeEntry(h("a", { href: finished_url.href }, "Finished"));
 		this.addItem(", ");
 		this.makeEntry(h("a", { href: viewer_url.href }, "Viewer"));
