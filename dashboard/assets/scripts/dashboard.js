@@ -194,7 +194,7 @@ const regExpsGenericise = {
 	sha1: ["[0-9a-fA-F]{40}"],
 	hex: [
 			"0[xX][0-9a-fA-F]*[a-fA-F]+[0-9a-fA-F]*",
-			(match) => `0[xX][a-fA-F0-9]` + len_re(match),
+			(match) => `0[xX][a-fA-F0-9]` + len_re(match.substr(2)),
 		],
 	digits: [
 		String.raw`\d+`,
