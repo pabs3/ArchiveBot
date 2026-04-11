@@ -1737,7 +1737,7 @@ class ContextMenuRenderer {
 		this.makeEntry(h("a", { href: finished_url.href }, "Finished"));
 		this.addItem(", ");
 		this.makeEntry(h("a", { href: viewer_url.href }, "Viewer"));
-		this.addItem(" or copy ");
+		this.addItem(" or Copy ");
 		this.makeCopyEntries(
 			null,
 			[['!status', `!status ${hostname_url.href}`]],
