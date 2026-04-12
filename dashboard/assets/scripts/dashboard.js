@@ -2005,8 +2005,10 @@ class ContextMenuRenderer {
 		let cmd = ""
 		cmd += info.jobType.textContent;
 		cmd += ` ${jobData.url}`;
-		cmd += ` -c ${jobData.concurrency}`;
-		cmd += ` -d ${jobData.delay_max}`;
+		if (jobData.concurrency != 3)
+			cmd += ` -c ${jobData.concurrency}`;
+		if (jobData.delay_min != 250 && jobData.delay_max != 375)
+			cmd += ` -d ${jobData.delay_max}`;
 		cmd += ` -p ${pipe}`;
 		if ("note" in jobData && jobData.note)
 			cmd += ` -e '${jobData.note}'`;
