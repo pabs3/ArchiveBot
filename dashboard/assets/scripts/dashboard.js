@@ -2226,29 +2226,32 @@ class ContextMenuRenderer {
 	}
 
 	onContextMenu(ev) {
-		if (ev.target.classList.contains("job-type")) {
+		// Use closest parent with class if target has no class
+		// Detects the correct menu for extraneous span elements
+		const classList = ev.target.className ? ev.target.classList : ev.target.closest('[class]').classList;
+		if (classList.contains("job-type")) {
 			this.jobCommandMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-url")) {
+		} else if (classList.contains("job-url")) {
 			this.jobUrlMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-options")) {
+		} else if (classList.contains("job-options")) {
 			this.jobCommandMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-nick")) {
+		} else if (classList.contains("job-nick")) {
 			this.jobNickMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-note")) {
+		} else if (classList.contains("job-note")) {
 			this.jobNoteMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-connections")) {
+		} else if (classList.contains("job-connections")) {
 			this.jobConcurrencyMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-connections-text")) {
+		} else if (classList.contains("job-connections-text")) {
 			this.jobConcurrencyMenu(ev, ev.target.previousElementSibling);
-		} else if (ev.target.classList.contains("job-delay")) {
+		} else if (classList.contains("job-delay")) {
 			this.jobDelayMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-ignores")) {
+		} else if (classList.contains("job-ignores")) {
 			this.jobIgnoresMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-pipeline")) {
+		} else if (classList.contains("job-pipeline")) {
 			this.jobPipelineMenu(ev, ev.target);
-		} else if (ev.target.classList.contains("job-ident")) {
+		} else if (classList.contains("job-ident")) {
 			this.jobIdentMenu(ev, ev.target);
-		} else if (ContextMenuRenderer.#log_classes.filter(c => ev.target.classList.contains(c)).length) {
+		} else if (ContextMenuRenderer.#log_classes.filter(c => classList.contains(c)).length) {
 			this.logWindowMenu(ev, ev.target);
 		} else {
 			this.blur();
