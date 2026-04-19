@@ -61,6 +61,9 @@ class IndexHandler(SearchHandler):
         self.render('index.html', search_results=self.do_search())
 
 class ApiSearchHandler(SearchHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+
     def get(self):
         results = self.do_search()
 

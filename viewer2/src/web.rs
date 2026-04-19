@@ -10,6 +10,7 @@ use axum::{
 use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use serde::Deserialize;
 use tokio::net::TcpListener;
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
     backend::{AuditItem, Backend, CostRow, DomainRow, ItemRow, JobRow, JobsRow, SearchResult},
@@ -25,6 +26,7 @@ struct WebState {
 }
 
 pub async fn run(address: SocketAddr, link_prefix: &str, backend: Backend) -> anyhow::Result<()> {
+    let cors = CorsLayer::new().allow_origin(Any);
     let router = Router::new()
         .route("/", get(index_handler))
         .route("/faq", get(faq_handler))
@@ -37,8 +39,8 @@ pub async fn run(address: SocketAddr, link_prefix: &str, backend: Backend) -> an
         .route("/jobs", get(jobs_handler))
         .route("/job/:job_id", get(job_handler))
         .route("/costs", get(cost_leaderboard_handler))
-        .route("/api/v1/search.json", get(api_v1_search_handler))
-        .route("/api/v2/search.json", get(api_v2_search_handler))
+        .route("/api/v1/search.json", get(api_v1_search_handler).route_layer(cors))
+        .route("/api/v2/search.json", get(api_v2_search_handler).route_layer(cors))
         .with_state(WebState {
             link_prefix: link_prefix.to_string(),
             backend,
