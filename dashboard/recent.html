@@ -35,13 +35,13 @@ html, body {
 	<script type="text/javascript" charset="utf8" src="/assets/jquery.dataTables.min.js"></script>
 	<script type="text/javascript" src="/assets/jquery.timeago.js"></script>
 	<script>
+		const searchParam = "initialFilter";
+	</script>
+	<script src="assets/dataTablesParams.js"></script>
+	<script>
 		var table;
 		var reloadInterval = 60 * 1000;
 		var timestampThreshold = 60 * 5 * 1000;
-		function getSearchParam() {
-			const params = new URLSearchParams(document.location.search);
-			return params.get("initialFilter");
-		}
 		function initTable() {
 			table = $('#pipeline_table').DataTable({
 				"paging" : false,
@@ -53,6 +53,10 @@ html, body {
 					"search": getSearchParam(),
 				},
 				"searchDelay": 500,
+				"initComplete":
+					function(settings, json) {
+						addEvents(this);
+					},
 				"rowId" : "job_data.ident",
 				"columns" : [ {
 					"data" : "job_data.pipeline_id"
@@ -83,19 +87,6 @@ html, body {
 					},
 					"className" : "dateFormatable"
 				}, ]
-			});
-
-			table.on('search.dt', function () {
-				let timeout = null;
-				clearTimeout(timeout);
-				timeout = setTimeout(() => {
-					clearTimeout(timeout);
-					let url = new URL(document.URL);
-					if (table.search() !== url.searchParams.get('initialFilter')) {
-						url.searchParams.set('initialFilter', table.search());
-						history.pushState(undefined, undefined, url.toString());
-					}
-				}, 500);
 			});
 
 			setTimeout(reloadTable, reloadInterval);
