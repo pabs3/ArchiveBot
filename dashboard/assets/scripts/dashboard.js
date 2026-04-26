@@ -1808,6 +1808,7 @@ class ContextMenuRenderer {
 			["6", `!con ${ident} 6`],
 			["9", `!con ${ident} 9`], //FIXME: disable this?
 			["12", `!con ${ident} 12`], //FIXME: disable this?
+			["18", `!con ${ident} 18`], //FIXME: disable this?
 			["24", `!con ${ident} 24`], //FIXME: disable this?
 		], { group: false, before: "", after: " "});
 	}
