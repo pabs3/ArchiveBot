@@ -6,7 +6,11 @@
 "use strict";
 
 String.prototype.removePrefix = function (prefix) {
-    return this.startsWith(prefix) ? this.substr(prefix.length) : this.toString();
+    return this.startsWith(prefix) ? this.slice(prefix.length) : this.toString();
+};
+
+String.prototype.removeSuffix = function (suffix) {
+    return this.endsWith(suffix) ? str.slice(0, -suffix.length) : this.toString();
 };
 
 // FIXME: add HTMLAnchorElement searchParams object instead
@@ -902,7 +906,7 @@ class JobsRenderer {
 		const jobUrl = statsElements.jobInfo.querySelector(".job-url");
 		jobUrl.dataset.url = jobUrl.textContent;
 		if (jobUrl.dataset.url.startsWith('https://transfer.archivete.am/')) {
-			jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.archivete.am/").removePrefix("inline/");
+			jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.archivete.am/").removePrefix("inline/").removeSuffix(".zst");
 			jobUrl.href = "https://transfer.archivete.am/inline/" + jobUrl.textContent;
 			jobUrl.textContent = jobUrl.textContent.split("/", 2)[1];
 		} else if (jobUrl.dataset.url.startsWith('https://nue2.nulldata.foo/gitlinks/')) {
