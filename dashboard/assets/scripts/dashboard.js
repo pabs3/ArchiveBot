@@ -1513,18 +1513,32 @@ const igsetMap = {
 }
 
 const igsetUnofficial = (String.raw`
-	^https?://www\.((instagram|facebook|threads|meta)\.com|meta\.ai)/.*\.pkg[,.](js|css)($|/)
+	^https?://([^/]+\.)?((instagram|facebook|threads|meta)\.com|meta\.ai|whatsapp\.net)/.*\.pkg[,.](js|css)($|/)
 	^https?://{primary_netloc}/((.*/)?productPage_USD_productPage_USD|(.*/)?h_\d+/(.*/)?h_\d+(/|$)|.*/.*\.(jpg|jpeg|svg|png|json|txt|xml|text|gif|pdf|mp4)$|.*\.(css|js|json)$|.*/wix-thunderbolt/)
+	^https?://{primary_netloc}/.*[?&]pref[nv][2-9]=
 	^https?://{primary_netloc}/.*[?&]prefv\d*=[^&]+(%7C|\|)
-	^https?://{primary_netloc}/[^?]*\?.*&amp;
+	^https?://{primary_netloc}/[^?]+\?.*&amp;amp;
 	^https?://(www|[a-z]{2})\.pinterest\.com/.*\.js$
+	^https?://s\.pinimg\.com/webapp/
 	^https?://(www\.)?flickr\.com/(.*\?giftPro|photos/[^/]+/(\d+/with/\d+/|.*(\.js|/likelySubtags\.json)))$
-	^https?://{primary_netloc}/.*/(udata\.vst|current\.cmp|current\.src|current_add\.ep|gtm\.js)/?$
+	^https?://([a-z]{2}\.)?wordpress.com/abuse/\?report_url=
+	^https?://([a-z]{2}\.)?wordpress\.com/reader/blogs/\d+/posts/\d+$
+	^https?://{primary_netloc}/.*/(udata\.vst|current\.cmp|current\.src|current_add\.ep)/?$
 	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/(h_\d+|w_\d+|c_fill|c_limit|fl_progressive:steep|f_webp|f_auto|q_auto:good)$
 	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/g_auto/https%3A%2F%2Fsubstack\.com%2Fimg%2Favatars%2Flogged-out\.png$
 	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/https%3A%2F%2F[^%]+\.s3\.amazonaws\.com%2Fpublic%2Fimages%2F
 	^https?://({primary_netloc}|substack\.com)/(sign-in|subscribe)
-	^https?://{primary_netloc}/confluence/s/.*/download/(context)?batch/[^/]+/[^/]+/
+	^https?://{primary_netloc}/(confluence/)?s/.*/download/(context)?batch/[^/]+/[^/]+/
+	^https?://{primary_netloc}/gallery/(index|picture)\.php\?/(\d+/)?(categories|category|search|tags)/(.*/)?(created|posted)-(monthly|weekly)-
+	^https?://{primary_netloc}/gallery/picture\.php\?.*&slideshow=\+
+	^https?://{primary_netloc}/gallery/.*[?&]action=rate
+	^https?://github\.com/[^/]+/[^/]+/issue_comments/\d+/edit_form\?textarea_id=issuecomment-\d+-body&comment_context=$
+	^https?://github\.com/[^/]+/[^/]+/issues/\d+/edit_form\?textarea_id=issue-\d+-body&comment_context=$
+	^https?://github\.com/[^/]+/[^/]+/pull/\d+/review_comment/\d+/edit_form\?textarea_id=discussion_r\d+-body&comment_context=discussion$
+	^https?://github\.com/[^/]+/[^/]+/pull/\d+/reviews/\d+/update/edit_form\?textarea_id=pullrequestreview-\d+-body&comment_context=discussion$
+	^https?://github\.com/user_content_edits/show_edit_history_log/
+	^https?://github\.com/login\?return_to=
+	^https?://[^/]+/packs/(js/)?[0-9a-f]{4,5}(-[0-9a-f]{4,5})+\.png$
 `).split("\n").map(re => re.trim()).filter((re) => re.length);
 
 /**
