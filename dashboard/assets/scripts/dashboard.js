@@ -1539,6 +1539,9 @@ const igsetUnofficial = (String.raw`
 	^https?://github\.com/user_content_edits/show_edit_history_log/
 	^https?://github\.com/login\?return_to=
 	^https?://[^/]+/packs/(js/)?[0-9a-f]{4,5}(-[0-9a-f]{4,5})+\.png$
+	^https?://yandex\.ru/q/.*(\.(svg|js|jpg|png)$|/%22data:image/svg)
+	^https?://support\.google\.com/.*\.svg$
+	^https?://www\.dropbox\.com/.*\.js$
 `).split("\n").map(re => re.trim()).filter((re) => re.length);
 
 /**
