@@ -1525,7 +1525,8 @@ const igsetUnofficial = (String.raw`
 	^https?://([a-z]{2}\.)?wordpress\.com/reader/blogs/\d+/posts/\d+$
 	^https?://{primary_netloc}/.*/(ak\.ai|ak\.m|ak\.t|ak\.acc|rua\.ims|rua\.ieh\.st)$
 	^https?://{primary_netloc}/wp-content/uploads/.+%20\d+w\,%20https?:/{primary_netloc}/wp-content/uploads/
-	^https?://{primary_netloc}/.*/(udata\.vst|current\.cmp|current\.src|current_add\.ep)/?$
+	^https?://{primary_netloc}/(?!wp-).*/jetpack_vendor/
+	^https?://{primary_netloc}/(.*/)?(udata\.vst|current\.cmp|current\.src|current_add\.ep)/?$
 	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/(h_\d+|w_\d+|c_fill|c_limit|fl_progressive:steep|f_webp|f_auto|q_auto:good)$
 	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/g_auto/https%3A%2F%2Fsubstack\.com%2Fimg%2Favatars%2Flogged-out\.png$
 	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/https%3A%2F%2F[^%]+\.s3\.amazonaws\.com%2Fpublic%2Fimages%2F
@@ -1543,7 +1544,7 @@ const igsetUnofficial = (String.raw`
 	^https?://[^/]+/packs/(js/)?[0-9a-f]{4,5}(-[0-9a-f]{4,5})+\.png$
 	^https?://yandex\.ru/q/.*(\.(svg|js|jpg|png)$|/%22data:image/svg)
 	^https?://support\.google\.com/.*\.svg$
-	^https?://www\.dropbox\.com/.*\.js$
+	^https?://(www\.dropbox|cfl\.dropboxstatic)\.com/.*\.js$
 	^https?://app\.(creativemail|myschedulr)\.com/.*/node_modules/
 	^https?://app\.(creativemail|myschedulr)\.com/.*\.js$
 	^https?://(secure|www)\.smugmug\.com/(login|logout)\?
