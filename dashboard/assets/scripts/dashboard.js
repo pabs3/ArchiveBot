@@ -1523,6 +1523,8 @@ const igsetUnofficial = (String.raw`
 	^https?://(www\.)?flickr\.com/(.*\?giftPro|photos/[^/]+/(\d+/with/\d+/|.*(\.js|/likelySubtags\.json)))$
 	^https?://([a-z]{2}\.)?wordpress.com/abuse/\?report_url=
 	^https?://([a-z]{2}\.)?wordpress\.com/reader/blogs/\d+/posts/\d+$
+	^https?://{primary_netloc}/.*/(ak\.ai|ak\.m|ak\.t|ak\.acc|rua\.ims|rua\.ieh\.st)$
+	^https?://{primary_netloc}/wp-content/uploads/.+%20\d+w\,%20https?:/{primary_netloc}/wp-content/uploads/
 	^https?://{primary_netloc}/.*/(udata\.vst|current\.cmp|current\.src|current_add\.ep)/?$
 	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/(h_\d+|w_\d+|c_fill|c_limit|fl_progressive:steep|f_webp|f_auto|q_auto:good)$
 	^https?://({primary_netloc}|[^/]*\.substack\.com)/.*/g_auto/https%3A%2F%2Fsubstack\.com%2Fimg%2Favatars%2Flogged-out\.png$
@@ -1542,6 +1544,15 @@ const igsetUnofficial = (String.raw`
 	^https?://yandex\.ru/q/.*(\.(svg|js|jpg|png)$|/%22data:image/svg)
 	^https?://support\.google\.com/.*\.svg$
 	^https?://www\.dropbox\.com/.*\.js$
+	^https?://app\.(creativemail|myschedulr)\.com/.*/node_modules/
+	^https?://app\.(creativemail|myschedulr)\.com/.*\.js$
+	^https?://(secure|www)\.smugmug\.com/(login|logout)\?
+	^https?://{primary_netloc}/.*[?&]_accept=
+	^https?://{primary_netloc}/.*[?&]_responseLevel=
+	^https?://{primary_netloc}/.*/(assets/|js/app/build/|js/lib/build/|skins/sam/|yui/2.8.1/|yui/3/)$
+	^https?://{primary_netloc}/api/v2/catalog/sku/\d+!price
+	^https?://{primary_netloc}/hack/feed\.mg\?(.*&)?PageCount=(?!100(&|$))\d+(&|$)
+	^https?://www\.smugmughelp\.com/hc/requests/new
 `).split("\n").map(re => re.trim()).filter((re) => re.length);
 
 /**
