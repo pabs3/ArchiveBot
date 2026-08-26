@@ -1935,8 +1935,8 @@ class ContextMenuRenderer {
 		}
 
 		const ignoresUnofficial = igsetUnofficial.filter((re) => (new RegExp(re
-			.replace('{primary_url}', regExpEscape(jobData.url))
-			.replace('{primary_netloc}', regExpEscape((new URL(jobData.url)).host))
+			.replaceAll('{primary_url}', regExpEscape(jobData.url))
+			.replaceAll('{primary_netloc}', regExpEscape((new URL(jobData.url)).host))
 		)).test(url)).map((re) => `!ig ${ident} ${re}`);
 		this.makeCopyEntries(ident, ignoresUnofficial);
 
