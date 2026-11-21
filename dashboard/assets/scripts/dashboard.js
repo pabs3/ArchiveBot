@@ -10,7 +10,7 @@ String.prototype.removePrefix = function (prefix) {
 };
 
 String.prototype.removeSuffix = function (suffix) {
-    return this.endsWith(suffix) ? str.slice(0, -suffix.length) : this.toString();
+    return this.endsWith(suffix) ? this.slice(0, -suffix.length) : this.toString();
 };
 
 // FIXME: add HTMLAnchorElement searchParams object instead
