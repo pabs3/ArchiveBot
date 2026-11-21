@@ -909,8 +909,23 @@ class JobsRenderer {
 			jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.archivete.am/").removePrefix("inline/").removeSuffix(".zst");
 			jobUrl.href = "https://transfer.archivete.am/inline/" + jobUrl.textContent;
 			jobUrl.textContent = jobUrl.textContent.split("/", 2)[1];
+		} else if (jobUrl.dataset.url.startsWith('https://transfer.notkiska.pw/')) {
+			jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.notkiska.pw/").removePrefix("inline/").removeSuffix(".zst");
+			jobUrl.href = "https://transfer.notkiska.pw/inline/" + jobUrl.textContent;
+			jobUrl.textContent = jobUrl.textContent.split("/", 2)[1];
+		} else if (jobUrl.dataset.url.startsWith('https://transfer.sh/')) {
+			jobUrl.textContent = jobUrl.textContent.removePrefix("https://transfer.sh/").removePrefix("inline/").removeSuffix(".zst");
+			jobUrl.href = "https://transfer.sh/inline/" + jobUrl.textContent;
+			jobUrl.textContent = jobUrl.textContent.split("/", 2)[1];
 		} else if (jobUrl.dataset.url.startsWith('https://nue2.nulldata.foo/gitlinks/')) {
 			jobUrl.textContent = jobUrl.textContent.removePrefix("https://nue2.nulldata.foo/gitlinks/");
+		} else if (jobUrl.dataset.url.startsWith('https://x0.at/')) {
+			jobUrl.textContent = jobUrl.textContent.removePrefix("https://x0.at/");
+		} else if (jobUrl.dataset.url.startsWith('https://fusl.phoenix.arpa.li/')) {
+			jobUrl.textContent = jobUrl.textContent.removePrefix("https://fusl.phoenix.arpa.li/");
+			if (jobUrl.textContent.includes("/")) {
+				jobUrl.textContent = jobUrl.textContent.split("/", 2)[1];
+			}
 		}
 		this.jobNoteUrlTitle(jobData, jobUrl);
 
